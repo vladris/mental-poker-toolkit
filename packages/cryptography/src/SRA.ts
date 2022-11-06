@@ -44,14 +44,24 @@ namespace SRA {
         };
     }
 
+    // Encrypts an object
+    export function encrypt<T>(obj: T, kp: SRAKeyPair): string {
+        return encryptString(JSON.stringify(obj), kp);
+    }
+
+    // Decrypts an object
+    export function decrypt<T>(cypherText: string, kp: SRAKeyPair): T {
+        return JSON.parse(decryptString(cypherText, kp));
+    }
+
     // Encrypts a string
-    export function encrypt(clearText: string, kp: SRAKeyPair): string {
+    export function encryptString(clearText: string, kp: SRAKeyPair): string {
         // Convert string to a bigint, encrypt that, then convert back
         return bigIntToString(encryptInt(stringToBigInt(clearText), kp));
     }
 
     // Decrypts a string
-    export function decrypt(cypherText: string, kp: SRAKeyPair): string {
+    export function decryptString(cypherText: string, kp: SRAKeyPair): string {
         // Convert string to a bigint, decrypt that, then convert back
         return bigIntToString(decryptInt(stringToBigInt(cypherText), kp));
     }
