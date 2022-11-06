@@ -3,6 +3,7 @@
 Provides cryptography used in Mental Poker.
 
 > **Warning**
+>
 > This library deals with cryptography and has not undergone a thorough code
 > review. It is not recommended to play Mental Poker for money at this time.
 
