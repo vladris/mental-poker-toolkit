@@ -16,3 +16,5 @@ test).
 algorithm. Note this is *not* RSA, though it has the same authors. Most
 symmetric encryption algorithms are non-commutative, but Mental Poker requires
 a commutative algorithm.
+
+`signing.ts` wraps digital signing using `crypto.subtle`.
