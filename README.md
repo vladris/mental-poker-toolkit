@@ -1,7 +1,7 @@
 # Mental Poker Toolkit
 
 A Mental Poker toolkit for building games in zero-trust environments with native
-supports for [Fluid Framework](https://fluidframework.com/).
+support for [Fluid Framework](https://fluidframework.com/).
 
 This started as a hackathon project for modeling a game where players need to
 maintain private state over a public channel (Fluid Framework). More details
