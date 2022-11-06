@@ -1,5 +1,7 @@
 # Mental Poker Toolkit
 
+![CI status](https://github.com/vladris/mental-poker-toolkit/actions/workflows/ci.yml/badge.svg)
+
 A Mental Poker toolkit for building games in zero-trust environments with native
 support for [Fluid Framework](https://fluidframework.com/).
 
