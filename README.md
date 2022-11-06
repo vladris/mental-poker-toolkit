@@ -35,7 +35,8 @@ packages in this repo, including:
 
 - [ ] Cryptography: SRA commutative symmetric encryption algorithm and digital
   signing.
-- [ ] An append-only distributed data structure for Fluid Framework.
+- [x] An [append-only distributed data structure](https://github.com/vladris/fluid-ledger)
+  for Fluid Framework.
 - [ ] An abstraction for client communication for games and a Fluid
   implementation for it.
 - [ ] A decorator providing message signing and authentication for client
