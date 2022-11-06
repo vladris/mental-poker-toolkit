@@ -1,0 +1,19 @@
+{
+  "name": "mental-poker-toolkit",
+  "version": "0.0.1",
+  "description": "A Mental Poker toolkit for building games in zero-trust environments.",
+  "main": "index.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/vladris/mental-poker-toolkit.git"
+  },
+  "author": "Vlad Riscutia",
+  "license": "MIT",
+  "bugs": {
+    "url": "https://github.com/vladris/mental-poker-toolkit/issues"
+  },
+  "homepage": "https://github.com/vladris/mental-poker-toolkit#readme"
+}

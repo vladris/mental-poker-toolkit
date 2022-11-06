@@ -1,8 +1,7 @@
 # Mental Poker Toolkit
 
-Spades Kit is A Mental Poker toolkit for building games in a zero-trust
-environment. It natively supports [Fluid Framework](https://fluidframework.com/)
-for client communication.
+A Mental Poker toolkit for building games in zero-trust environments with native
+supports for [Fluid Framework](https://fluidframework.com/).
 
 This started as a hackathon project for modeling a game where players need to
 maintain private state over a public channel (Fluid Framework). More details
