@@ -1,5 +1,5 @@
 **/node_modules/**
-packages/cryptography/coverage/**
-packages/cryptography/lib/**
-packages/cryptography/test/**
+packages/*/coverage/**
+packages/*/lib/**
+packages/*/test/**
 tsconfig.tsbuildinfo
