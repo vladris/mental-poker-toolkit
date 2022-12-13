@@ -1,1 +1,1 @@
-// TBA
+export { makeFluidClient } from "./fluidClient";

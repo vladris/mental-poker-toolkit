@@ -1,4 +1,4 @@
-export interface ITransport<T> {
+export declare interface ITransport<T> {
     postAction(value: T): void;
 
     on(event: "actionPosted", listener: (value: T) => void): this;

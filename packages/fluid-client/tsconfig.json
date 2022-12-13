@@ -1,11 +1,15 @@
 {
   "extends": "../../tsconfig.base.json",
   "compilerOptions": {
+    "allowSyntheticDefaultImports": true,
     "composite": true,
     "declaration": true,
     "outDir": "lib",
     "rootDir": "src"
   },
   "include": ["src"],
-  "exclude": ["src/test/*"]
+  "exclude": ["src/test/*"],
+  "references": [
+    { "path": "../types/tsconfig.json" }
+  ]
 }

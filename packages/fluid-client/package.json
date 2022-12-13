@@ -14,5 +14,9 @@
   },
   "devDependencies": {
     "typescript": "^4.8.4"
+  },
+  "dependencies": {
+    "@mental-poker-toolkit/types": "^0.0.1",
+    "fluid-ledger-dds": "^0.1.3"
   }
 }
