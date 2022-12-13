@@ -1,1 +1,1 @@
-// TBA
+export { ITransport } from "./transport";
