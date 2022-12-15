@@ -3,7 +3,11 @@
   "private": true,
   "description": "A Mental Poker toolkit for building games in zero-trust environments.",
   "workspaces": [
-    "packages/*"
+    "packages/types",
+    "packages/cryptography",
+    "packages/fluid-client",
+    "packages/signed-transport",
+    "packages/state-machine"
   ],
   "scripts": {
     "build": "npm run build --ws"
