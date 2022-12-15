@@ -2,4 +2,5 @@
 packages/*/coverage/**
 packages/*/lib/**
 packages/*/test/**
+demos/*/test/**
 tsconfig.tsbuildinfo
