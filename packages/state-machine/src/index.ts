@@ -1,1 +1,1 @@
-// TBA
+export { StateMachine } from "./stateMachine";
