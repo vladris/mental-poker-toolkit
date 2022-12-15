@@ -11,7 +11,7 @@ class FluidTransport<T> extends EventEmitter implements ITransport<T> {
     }
 
     postAction(value: T) {
-        this.ledger.append(JSON.stringify(value));
+        return Promise.resolve(this.ledger.append(JSON.stringify(value)));
     }
 }
 

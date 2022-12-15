@@ -8,5 +8,9 @@
     "rootDir": "src"
   },
   "include": ["src"],
-  "exclude": ["src/test/*"]
+  "exclude": ["src/test/*"],
+  "references": [
+    { "path": "../types/tsconfig.json" },
+    { "path": "../cryptography/tsconfig.json" }
+  ]
 }
