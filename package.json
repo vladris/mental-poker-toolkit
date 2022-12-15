@@ -7,7 +7,8 @@
     "packages/cryptography",
     "packages/fluid-client",
     "packages/signed-transport",
-    "packages/state-machine"
+    "packages/state-machine",
+    "demos/transport"
   ],
   "scripts": {
     "build": "npm run build --ws"

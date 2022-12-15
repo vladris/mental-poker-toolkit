@@ -1,1 +1,1 @@
-export { makeFluidClient } from "./fluidClient";
+export * from "./fluidClient";

@@ -1,0 +1,24 @@
+{
+  "name": "@mental-poker-toolkit/demo-transport",
+  "version": "1.0.0",
+  "description": "Demo transport setup for Mental Poker",
+  "scripts": {
+    "build": "tsc"
+  },
+  "author": "Vlad Riscutia",
+  "license": "MIT",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/vladris/mental-poker-toolkit.git"
+  },
+  "devDependencies": {
+    "typescript": "^4.9.4"
+  },
+  "dependencies": {
+    "@fluidframework/azure-client": "^1.1.0",
+    "@fluidframework/test-client-utils": "^1.3.1",
+    "@mental-poker-toolkit/fluid-client": "^0.0.1",
+    "@mental-poker-toolkit/signed-transport": "^0.0.1",
+    "fluid-ledger-dds": "^0.1.3"
+  }
+}
