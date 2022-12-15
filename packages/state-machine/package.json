@@ -1,7 +1,7 @@
 {
-  "name": "@mental-poker-toolkit/fluid-client",
+  "name": "@mental-poker-toolkit/state-machine",
   "version": "0.0.1",
-  "description": "Fluid client for Mental Poker",
+  "description": "State machine for Mental Poker",
   "main": "lib/index.js",
   "scripts": {
     "build": "tsc"
@@ -14,9 +14,5 @@
   },
   "devDependencies": {
     "typescript": "^4.9.4"
-  },
-  "dependencies": {
-    "@mental-poker-toolkit/types": "^0.0.1",
-    "fluid-ledger-dds": "^0.1.3"
   }
 }
