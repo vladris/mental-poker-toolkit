@@ -1,13 +1,13 @@
 import { EventEmitter } from "events";
-import { ITransport } from "@mental-poker-toolkit/types";
 import {
     ClientKey,
+    ITransport,
     KeyStore,
     Signed,
-    Signing,
-} from "@mental-poker-toolkit/cryptography";
+} from "@mental-poker-toolkit/types";
+import { Signing } from "@mental-poker-toolkit/cryptography";
 
-class SignedTransport<T> extends EventEmitter implements ITransport<T> {
+export class SignedTransport<T> extends EventEmitter implements ITransport<T> {
     constructor(
         private readonly transport: ITransport<Signed<T>>,
         private readonly clientKey: ClientKey,

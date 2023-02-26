@@ -1,18 +1,7 @@
 // Digital signing using crypto.subtle
 import { ClientId } from "@mental-poker-toolkit/types";
 import { encode, decode } from "base64-arraybuffer";
-
-// Keys are represented as strings
-export type Key = string;
-
-// Public/private key pair
-export type PublicPrivateKeyPair = {
-    publicKey: Key;
-    privateKey: Key;
-};
-
-// Signed type
-export type Signed<T> = T & { clientId?: ClientId; signature?: string };
+import { Key, PublicPrivateKeyPair } from "@mental-poker-toolkit/types";
 
 export namespace Signing {
     // Generate public/private key pair
