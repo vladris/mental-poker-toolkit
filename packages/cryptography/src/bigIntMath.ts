@@ -46,7 +46,7 @@ namespace BigIntMath {
         }
 
         if (a !== BigInt(1)) {
-            throw new Error("No invese");
+            throw new Error("No inverse");
         }
 
         // Find the inverse
@@ -83,7 +83,7 @@ namespace BigIntMath {
         do {
             // We actually generate a bunch of random numbers and check each to
             // see if it is prime. Odds of hitting a prime < x are 1/ln(x)
-            candidate = BigIntMath.randBigInt();
+            candidate = BigIntMath.randBigInt(sizeInBytes);
             // Miller-Rabin is a fast probabilistic primality test
         } while (!millerRabinTest(candidate));
 
@@ -130,7 +130,7 @@ namespace BigIntMath {
             return false;
         }
 
-        // Find s and t such that n = 2 ^ s * d + 1
+        // Find s and d such that candidate = 2 ^ s * d + 1
         let d = candidate - BigInt(1);
         let s = BigInt(0);
 

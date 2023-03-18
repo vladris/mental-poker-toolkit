@@ -1,5 +1,4 @@
 // Digital signing using crypto.subtle
-import { ClientId } from "@mental-poker-toolkit/types";
 import { encode, decode } from "base64-arraybuffer";
 import { Key, PublicPrivateKeyPair } from "@mental-poker-toolkit/types";
 
