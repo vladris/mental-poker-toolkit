@@ -2,6 +2,7 @@
   "name": "@mental-poker-toolkit/demo-transport",
   "version": "1.0.0",
   "description": "Demo transport setup for Mental Poker",
+  "main": "lib/index.js",
   "scripts": {
     "build": "tsc"
   },
