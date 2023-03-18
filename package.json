@@ -8,7 +8,8 @@
     "packages/fluid-client",
     "packages/signed-transport",
     "packages/state-machine",
-    "demos/transport"
+    "demos/transport",
+    "demos/rock-paper-scissors"
   ],
   "scripts": {
     "build": "npm run build --ws"
