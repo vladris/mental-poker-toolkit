@@ -8,7 +8,6 @@
     "packages/fluid-client",
     "packages/signed-transport",
     "packages/state-machine",
-    "demos/state-machine",
     "demos/transport"
   ],
   "scripts": {
