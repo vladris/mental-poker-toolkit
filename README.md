@@ -34,13 +34,13 @@ We implemented a zero-trust discard game over Fluid Framework over a couple of
 hackathons. We will be refactoring/cleaning up the code and open sourcing it as
 packages in this repo, including:
 
-- [ ] Cryptography: SRA commutative symmetric encryption algorithm and digital
+- [x] Cryptography: SRA commutative symmetric encryption algorithm and digital
   signing.
 - [x] An [append-only distributed data structure](https://github.com/vladris/fluid-ledger)
   for Fluid Framework.
-- [ ] An abstraction for client communication for games and a Fluid
+- [x] An abstraction for client communication for games and a Fluid
   implementation for it.
-- [ ] A decorator providing message signing and authentication for client
+- [x] A decorator providing message signing and authentication for client
   communication.
 - [ ] A state machine for modeling games.
 - [ ] Primitives for common game actions like handling a deck of cards.
