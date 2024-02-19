@@ -1,0 +1,21 @@
+{
+  "name": "@mental-poker-toolkit/primitives",
+  "version": "0.0.1",
+  "description": "Primitives for Mental Poker",
+  "main": "lib/index.js",
+  "scripts": {
+    "build": "tsc"
+  },
+  "author": "Vlad Riscutia",
+  "license": "MIT",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/vladris/mental-poker-toolkit.git"
+  },
+  "devDependencies": {
+    "typescript": "^4.9.4"
+  },
+  "dependencies": {
+    "@mental-poker-toolkit/types": "^0.0.1"
+  }
+}

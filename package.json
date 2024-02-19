@@ -8,6 +8,7 @@
     "packages/fluid-client",
     "packages/signed-transport",
     "packages/state-machine",
+    "packages/primitives",
     "demos/transport",
     "demos/rock-paper-scissors"
   ],
