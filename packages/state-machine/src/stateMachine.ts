@@ -3,7 +3,7 @@ import { Sequence } from "./sequence";
 import { Fork } from "./fork";
 import { Connection } from "./connection";
 
-namespace StateMachine {
+export namespace StateMachine {
     export function sequence<TAction extends BaseAction, TContext>(transitions: Transition<TAction, TContext>[]) {
         return new Sequence(transitions);
     }
