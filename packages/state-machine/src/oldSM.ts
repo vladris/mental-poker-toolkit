@@ -13,6 +13,7 @@ type ExpectedAction = {
     response?: Response;
 };
 
+/*
 export class StateMachine<TAction extends BaseAction> {
     // Queue of expected actions
     private expectedActions: [ExpectedAction][] = [];
@@ -88,3 +89,4 @@ export class StateMachine<TAction extends BaseAction> {
         return true;
     }
 }
+*/
