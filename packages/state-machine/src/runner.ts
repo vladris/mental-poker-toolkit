@@ -9,19 +9,17 @@ export function run<TAction extends BaseAction, TContext>(
     transport: ITransport<TAction>,
     context: TContext
 ): Promise<void> {
-    let resolve = undefined;
+    // Create a promise that resolves when the state machine is done
+    return new Promise<void>((resolve, reject) => {
+        transport.on("actionPosted", (action) => {
+            if (!stateMachine.accept(action, context)) {
+                reject(new Error(`Invalid action ${action}`));
+            }
 
-    const result = new Promise((resolve, reject) => {
-        deffered = { resolve, reject };
+            if (stateMachine.done()) {
+                stateMachine.reset();
+                resolve();
+            }
+        });
     });
-
-    transport.on("actionPosted", (action) => {
-        stateMachine.accept(action, context);
-
-        if (stateMachine.done()) {
-            stateMachine.reset();
-        }
-    });
-
-    return result;
 }
