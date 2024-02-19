@@ -1,7 +1,7 @@
 // Game model
 
 // Possible plays
-enum Play {
+export enum Play {
     Rock = "rock",
     Paper = "paper",
     Scissors = "scissors",

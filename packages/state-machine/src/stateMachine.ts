@@ -1,90 +1,38 @@
-import { BaseAction, ClientId } from "@mental-poker-toolkit/types";
+import { BaseAction, IStateMachine, ITransport, Transition } from "@mental-poker-toolkit/types";
+import { Sequence } from "./sequence";
+import { Fork } from "./fork";
+import { Connection } from "./connection";
 
-// Response for an action is a callback
-type Response = (action: BaseAction) => void;
+export namespace StateMachine {
+    export function sequence<TAction extends BaseAction, TContext>(transitions: Transition<TAction, TContext>[]) {
+        return new Sequence(transitions);
+    }
 
-// Who took the action
-type ActionOriginator = "me" | "other" | "any";
+    export function fork<TAction extends BaseAction, TContext>(forks: IStateMachine<TAction, TContext>[]) {
+        return new Fork(forks);
+    }
 
-// Expected action type and optional response
-type ExpectedAction = {
-    by: ActionOriginator;
-    type: string;
-    response?: Response;
-};
+    export function connect<TAction extends BaseAction, TContext>(stateMachine1: IStateMachine<TAction, TContext>, stateMachine2: IStateMachine<TAction, TContext>) {
+        return new Connection(stateMachine1, stateMachine2);
+    }
 
-export class StateMachine<TAction extends BaseAction> {
-    // Queue of expected actions
-    private expectedActions: [ExpectedAction][] = [];
-
-    // Constructor sets the ID of this client
-    constructor(private clientId: ClientId) {}
-
-    // Process an incoming action
-    acceptAction(action: TAction) {
-        const expected = this.expectedActions.shift();
-
-        // We should always be expecting something
-        if (!expected) {
-            throw Error("We are not expecting anything?");
-        }
-
-        for (const expectedAction of expected) {
-            if (this.checkExpected(expectedAction, action)) {
-                // This is the expected action
-                if (expectedAction.response) {
-                    expectedAction.response(action);
+    export function run<TAction extends BaseAction, TContext>(
+        stateMachine: IStateMachine<TAction, TContext>,
+        transport: ITransport<TAction>,
+        context: TContext
+    ): Promise<void> {
+        // Create a promise that resolves when the state machine is done
+        return new Promise<void>((resolve, reject) => {
+            transport.on("actionPosted", (action) => {
+                if (!stateMachine.accept(action, context)) {
+                    reject(new Error(`Invalid action ${action}`));
                 }
-                return;
-            }
-        }
 
-        throw Error("Unexpected action");
-    }
-
-    // Create a "from me" expected action
-    fromMe(type: string, response?: Response) {
-        return { by: "me", type, response };
-    }
-
-    // Create a "from other" expected action
-    fromOther(type: string, response?: Response) {
-        return { by: "other", type, response };
-    }
-
-    // Create a "from any" expected action
-    fromAny(type: string, response?: Response) {
-        return { by: "any", type, response };
-    }
-
-    // Queue expected action
-    expectAction(expected: ExpectedAction) {
-        this.expectedActions.push([expected]);
-    }
-
-    // Queue multiple expected actions
-    expectActions(expected: [ExpectedAction]) {
-        this.expectedActions.push(expected);
-    }
-
-    // Check if expected and actual actions match
-    private checkExpected(expected: ExpectedAction, action: TAction) {
-        // Check if the action is of the expected type
-        if (expected.type !== action.type) {
-            return false;
-        }
-
-        // Check if the action is from the expected originator
-        if (expected.by === "me" && action.clientId !== this.clientId) {
-            return false;
-        } else if (
-            expected.by === "other" &&
-            action.clientId === this.clientId
-        ) {
-            return false;
-        }
-
-        // This is the expected action
-        return true;
+                if (stateMachine.done()) {
+                    stateMachine.reset();
+                    resolve();
+                }
+            });
+        });
     }
 }

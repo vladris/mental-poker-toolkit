@@ -1,1 +1,1 @@
-export { StateMachine } from "./stateMachine";
+export * from "./stateMachine";
