@@ -5,23 +5,23 @@ import { Signing } from "@mental-poker-toolkit/cryptography";
 export type KeyExchangeAction = BaseAction & { publicKey: Key };
 
 export type CryptoContext = {
-    id: string,
+    clientId: ClientId,
     me: PublicPrivateKeyPair,
     first: ClientId | undefined,
     keyStore: KeyStore
 };
 
-export async function makeCryptoContext(id: string): Promise<CryptoContext> {
+export async function makeCryptoContext(clientId: ClientId): Promise<CryptoContext> {
     return {
-        id,
+        clientId,
         me: await Signing.generatePublicPrivateKeyPair(),
         first: undefined,
         keyStore: new Map<ClientId, Key>()
     };
 }
 
-export async function keyExchange(context: CryptoContext, transport: ITransport<Signed<KeyExchangeAction>>) {
-    const setKey = (action: Signed<KeyExchangeAction>, context: CryptoContext) => {
+export async function keyExchange(context: CryptoContext, transport: ITransport<KeyExchangeAction>) {
+    const setKey = (action: KeyExchangeAction, context: CryptoContext) => {
         // Protocol expects clients to post an ID
         if (action.clientId === undefined) {
             return false;
@@ -50,7 +50,7 @@ export async function keyExchange(context: CryptoContext, transport: ITransport<
     // Post public key
     transport.postAction({
         type: "keyExchange",
-        clientId: context.id,
+        clientId: context.clientId,
         publicKey: context.me.publicKey
     });
 

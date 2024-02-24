@@ -1,8 +1,4 @@
-import {
-    BaseAction,
-    IStateMachine,
-    Transition,
-} from "@mental-poker-toolkit/types";
+import { BaseAction, IStateMachine } from "@mental-poker-toolkit/types";
 
 // State machine implementation forking to multiple state machines
 export class Fork<TAction extends BaseAction, TContext>

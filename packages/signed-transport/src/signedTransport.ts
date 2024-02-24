@@ -1,5 +1,6 @@
 import { EventEmitter } from "events";
 import {
+    BaseAction,
     ClientKey,
     ITransport,
     KeyStore,
@@ -7,7 +8,7 @@ import {
 } from "@mental-poker-toolkit/types";
 import { Signing } from "@mental-poker-toolkit/cryptography";
 
-export class SignedTransport<T> extends EventEmitter implements ITransport<T> {
+export class SignedTransport<T extends BaseAction> extends EventEmitter implements ITransport<T> {
     constructor(
         private readonly transport: ITransport<Signed<T>>,
         private readonly clientKey: ClientKey,
@@ -31,28 +32,24 @@ export class SignedTransport<T> extends EventEmitter implements ITransport<T> {
 
         return {
             ...value,
-            clientId: this.clientKey.clientId,
             signature: signature,
         };
     }
 
     private async verifySignature(value: Signed<T>): Promise<T> {
-        if (!value.clientId || !value.signature) {
+        if (!value.signature) {
             throw Error("Message missing signature");
         }
 
-        // Remove signature and client ID from object and store them
-        const clientId = value.clientId;
+        // Remove signature from object and store it
         const signature = value.signature;
-
-        delete value.clientId;
         delete value.signature;
 
         // Figure out which public key we need to use
-        const publicKey = this.keyStore.get(clientId);
+        const publicKey = this.keyStore.get(value.clientId);
 
         if (!publicKey) {
-            throw Error(`No public key available for client ${clientId}`);
+            throw Error(`No public key available for client ${value.clientId}`);
         }
 
         if (

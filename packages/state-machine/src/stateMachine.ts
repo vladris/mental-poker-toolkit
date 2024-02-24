@@ -12,7 +12,7 @@ export namespace StateMachine {
         return new Fork(forks);
     }
 
-    export function connect<TAction extends BaseAction, TContext>(stateMachine1: IStateMachine<TAction, TContext>, stateMachine2: IStateMachine<TAction, TContext>) {
+    export function connect<TAction1 extends BaseAction, TAction2 extends BaseAction, TContext>(stateMachine1: IStateMachine<TAction1, TContext>, stateMachine2: IStateMachine<TAction2, TContext>) {
         return new Connection(stateMachine1, stateMachine2);
     }
 
@@ -23,16 +23,19 @@ export namespace StateMachine {
     ): Promise<void> {
         // Create a promise that resolves when the state machine is done
         return new Promise<void>((resolve, reject) => {
-            transport.on("actionPosted", (action) => {
+            const listener = (action: TAction) => {
                 if (!stateMachine.accept(action, context)) {
                     reject(new Error(`Invalid action ${action}`));
                 }
 
                 if (stateMachine.done()) {
                     stateMachine.reset();
+                    
+                    // Remove event listener
+                    transport.off("actionPosted", listener);
                     resolve();
                 }
-            });
+            }
         });
     }
 }
