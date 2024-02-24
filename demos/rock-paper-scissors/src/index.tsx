@@ -1,23 +1,48 @@
-import { ITransport } from "@mental-poker-toolkit/types";
 import { getLedger } from "@mental-poker-toolkit/demo-transport";
 import ReactDOM from "react-dom/client";
+import { randomClientId, upgradeTransport } from "@mental-poker-toolkit/primitives";
+import { Action, Context, TestAction } from "./model";
+import { ButtonsView } from "./buttonsView";
 
-type MainViewProps = { transport: ITransport<unknown> }
+type MainViewProps = { context: Context };
 
 function MainView(props: MainViewProps) {
-    const { transport } = props;
+    const { context } = props;
 
-    return (<div style={{ display: "flex" }}>
+    return (<div style={{ display: "block" }}>
         <div>
-            <p>Hello world!</p>
+            <p>ID: {context.clientId}</p>
+        </div>
+        <ButtonsView onPlay={(s) => {console.log(s)}}></ButtonsView>
+        <div>
+            <p>Status: { context.gameStatus} </p>
         </div>
     </div>)
 }
 
-getLedger().then((ledger) => {
+getLedger<Action>().then((ledger) => {
     const root = ReactDOM.createRoot(document.getElementById("root")!);
     
+    const context: Context = {
+        clientId: randomClientId(),
+        transport: ledger,
+        myPlay: "",
+        theirPlay: "",
+        gameStatus: "Waiting"
+    };
+
+    upgradeTransport(context.clientId, ledger).then((ledger) => {
+        context.transport = ledger;
+
+        ledger.on("actionPosted", (v) => {
+            if (v.type === "TestAction") {
+                console.log(`${v.clientId}: ${(v as TestAction).value}`)
+            }
+        })
+        ledger.postAction({ clientId: context.clientId, type: "TestAction", value: "Test"});
+    });
+
     root.render(
-        <MainView transport={ledger}></MainView>
+        <MainView context={context}></MainView>
     );
 });
