@@ -1,48 +1,46 @@
-import { getLedger } from "@mental-poker-toolkit/demo-transport";
 import ReactDOM from "react-dom/client";
+import { Provider } from "react-redux";
+import { getLedger } from "@mental-poker-toolkit/demo-transport";
 import { randomClientId, upgradeTransport } from "@mental-poker-toolkit/primitives";
-import { Action, Context, TestAction } from "./model";
-import { ButtonsView } from "./buttonsView";
+import { Action } from "./model";
+import { MainView } from "./mainView";
+import { store, updateGameStatus, updateId, updateOtherPlayer, updateTransport } from "./store";
 
-type MainViewProps = { context: Context };
-
-function MainView(props: MainViewProps) {
-    const { context } = props;
-
-    return (<div style={{ display: "block" }}>
-        <div>
-            <p>ID: {context.clientId}</p>
-        </div>
-        <ButtonsView onPlay={(s) => {console.log(s)}}></ButtonsView>
-        <div>
-            <p>Status: { context.gameStatus} </p>
-        </div>
-    </div>)
-}
-
+// Initialization - we first connect to the Fluid session
 getLedger<Action>().then((ledger) => {
-    const root = ReactDOM.createRoot(document.getElementById("root")!);
-    
-    const context: Context = {
-        clientId: randomClientId(),
-        transport: ledger,
-        myPlay: "",
-        theirPlay: "",
-        gameStatus: "Waiting"
-    };
+    // Generate a random client ID and store transport
+    store.dispatch(updateId(randomClientId()));
+    store.dispatch(updateTransport(ledger));
 
-    upgradeTransport(context.clientId, ledger).then((ledger) => {
-        context.transport = ledger;
+    // Listener for other player
+    const setOtherPlayer = (action: Action) => {
+        // If the action was posted by us, return
+        if (action.clientId === store.getState().id.value) {
+            return;
+        }
 
-        ledger.on("actionPosted", (v) => {
-            if (v.type === "TestAction") {
-                console.log(`${v.clientId}: ${(v as TestAction).value}`)
-            }
-        })
-        ledger.postAction({ clientId: context.clientId, type: "TestAction", value: "Test"});
+        // Otherwise we got the second player, update store with its client ID
+        store.dispatch(updateOtherPlayer(action.clientId));
+
+        // Stop listening
+        store.getState().transport.value?.off("actionPosted", setOtherPlayer);
+    }
+    store.getState().transport.value?.on("actionPosted", setOtherPlayer);
+
+    // Once other player joins, upgrade transport to one with signature verification
+    upgradeTransport(store.getState().id.value, ledger).then((ledger) => {
+        // Replace stored transport with the upgraded one
+        store.dispatch(updateTransport(ledger));
+
+        // Now we can start playing
+        store.dispatch(updateGameStatus("Ready"));
     });
 
+    // Set up React
+    const root = ReactDOM.createRoot(document.getElementById("root")!);
     root.render(
-        <MainView context={context}></MainView>
+        <Provider store={store}>
+            <MainView />
+        </Provider>
     );
 });

@@ -12,6 +12,9 @@ export type PlayAction = { clientId: ClientId, type: "PlayAction", encryptedSele
 
 export type RevealAction = { clientId: ClientId, type: "RevealAction", key: SRAKeyPair };
 
+export type PlayValue = PlaySelection & { type: "Selection "} | EncryptedSelection & { type: "Encrypted"} | { type: "None" };
+
+
 export type TestAction = BaseAction & { type: "TestAction", value: string };
 
 export type Action = TestAction | PlayAction | RevealAction;
