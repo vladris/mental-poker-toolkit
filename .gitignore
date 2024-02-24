@@ -4,4 +4,5 @@ packages/*/lib/**
 packages/*/test/**
 demos/*/test/**
 demos/*/lib/**
+demos/*/build/**
 tsconfig.tsbuildinfo
