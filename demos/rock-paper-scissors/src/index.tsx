@@ -8,29 +8,25 @@ import { store, updateGameStatus, updateId, updateOtherPlayer, updateTransport }
 
 // Initialization - we first connect to the Fluid session
 getLedger<Action>().then((ledger) => {
-    // Generate a random client ID and store transport
-    store.dispatch(updateId(randomClientId()));
+    // Generate a random client ID
+    const id = randomClientId();
+
+    // Store client ID and transport
+    store.dispatch(updateId(id));
     store.dispatch(updateTransport(ledger));
 
-    // Listener for other player
-    const setOtherPlayer = (action: Action) => {
-        // If the action was posted by us, return
-        if (action.clientId === store.getState().id.value) {
-            return;
-        }
-
-        // Otherwise we got the second player, update store with its client ID
-        store.dispatch(updateOtherPlayer(action.clientId));
-
-        // Stop listening
-        store.getState().transport.value?.off("actionPosted", setOtherPlayer);
-    }
-    store.getState().transport.value?.on("actionPosted", setOtherPlayer);
-
     // Once other player joins, upgrade transport to one with signature verification
-    upgradeTransport(store.getState().id.value, ledger).then((ledger) => {
+    upgradeTransport(2, id, ledger).then((ledger) => {
         // Replace stored transport with the upgraded one
         store.dispatch(updateTransport(ledger));
+
+        // Extract other player's id and store it
+        for (const action of ledger.getActions()) {
+            if (action.clientId !== id) {
+                store.dispatch(updateOtherPlayer(action.clientId));
+                break;
+            }
+        }
 
         // Now we can start playing
         store.dispatch(updateGameStatus("Ready"));

@@ -8,7 +8,10 @@ import {
 } from "@mental-poker-toolkit/types";
 import { Signing } from "@mental-poker-toolkit/cryptography";
 
-export class SignedTransport<T extends BaseAction> extends EventEmitter implements ITransport<T> {
+export class SignedTransport<T extends BaseAction>
+    extends EventEmitter
+    implements ITransport<T>
+{
     constructor(
         private readonly transport: ITransport<Signed<T>>,
         private readonly clientKey: ClientKey,
@@ -18,6 +21,12 @@ export class SignedTransport<T extends BaseAction> extends EventEmitter implemen
         transport.on("actionPosted", async (value) => {
             this.emit("actionPosted", await this.verifySignature(value));
         });
+    }
+
+    *getActions() {
+        for (const value of this.transport.getActions()) {
+            yield value;
+        }
     }
 
     async postAction(value: T) {
