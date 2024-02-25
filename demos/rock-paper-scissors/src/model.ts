@@ -74,7 +74,7 @@ function makePlay(
     clientId: ClientId,
     selection: PlaySelection
 ): [PlayAction, RevealAction] {
-    const kp = SRA.generateKeyPair(BigIntMath.randBigInt());
+    const kp = SRA.generateKeyPair(BigIntMath.randPrime());
 
     return [
         {
