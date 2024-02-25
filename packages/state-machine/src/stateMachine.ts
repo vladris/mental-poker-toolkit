@@ -1,38 +1,61 @@
-import { BaseAction, IStateMachine, ITransport, Transition } from "@mental-poker-toolkit/types";
+import {
+    BaseAction,
+    IStateMachine,
+    IQueue,
+    Transition,
+} from "@mental-poker-toolkit/types";
 import { Sequence } from "./sequence";
 import { Fork } from "./fork";
 import { Connection } from "./connection";
 
 export namespace StateMachine {
-    export function sequence<TAction extends BaseAction, TContext>(transitions: Transition<TAction, TContext>[]) {
+    export function sequence<TAction extends BaseAction, TContext>(
+        transitions: Transition<TAction, TContext>[]
+    ) {
         return new Sequence(transitions);
     }
 
-    export function fork<TAction extends BaseAction, TContext>(forks: IStateMachine<TAction, TContext>[]) {
+    export function sequenceN<TAction extends BaseAction, TContext>(
+        transition: Transition<TAction, TContext>,
+        times: number
+    ) {
+        return new Sequence(new Array(times).fill(transition));
+    }
+
+    export function fork<TAction extends BaseAction, TContext>(
+        forks: IStateMachine<TAction, TContext>[]
+    ) {
         return new Fork(forks);
     }
 
-    export function connect<TAction extends BaseAction, TContext>(stateMachine1: IStateMachine<TAction, TContext>, stateMachine2: IStateMachine<TAction, TContext>) {
+    export function connect<
+        TAction1 extends BaseAction,
+        TAction2 extends BaseAction,
+        TContext
+    >(
+        stateMachine1: IStateMachine<TAction1, TContext>,
+        stateMachine2: IStateMachine<TAction2, TContext>
+    ) {
         return new Connection(stateMachine1, stateMachine2);
     }
 
-    export function run<TAction extends BaseAction, TContext>(
+    export async function run<TAction extends BaseAction, TContext>(
         stateMachine: IStateMachine<TAction, TContext>,
-        transport: ITransport<TAction>,
+        queue: IQueue<TAction>,
         context: TContext
-    ): Promise<void> {
-        // Create a promise that resolves when the state machine is done
-        return new Promise<void>((resolve, reject) => {
-            transport.on("actionPosted", (action) => {
-                if (!stateMachine.accept(action, context)) {
-                    reject(new Error(`Invalid action ${action}`));
-                }
+    ) {
+        // Run state machine until done
+        while (!stateMachine.done()) {
+            // Dequeue action
+            const action = await queue.dequeue();
 
-                if (stateMachine.done()) {
-                    stateMachine.reset();
-                    resolve();
-                }
-            });
-        });
+            // If action is not accepted, throw error
+            if (!stateMachine.accept(action, context)) {
+                throw new Error(`Invalid action ${action}`);
+            }
+        }
+
+        // Reset state machine
+        stateMachine.reset();
     }
 }
