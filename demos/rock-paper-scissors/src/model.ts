@@ -1,4 +1,4 @@
-import { BigIntMath, SRA } from "@mental-poker-toolkit/cryptography";
+import { BigIntUtils, SRA } from "@mental-poker-toolkit/cryptography";
 import { ClientId, SRAKeyPair } from "@mental-poker-toolkit/types";
 import { StateMachine } from "@mental-poker-toolkit/state-machine";
 import {
@@ -18,17 +18,17 @@ type SerializedSRAKeyPair = {
 
 function serializeSRAKeyPair(kp: SRAKeyPair): SerializedSRAKeyPair {
     return {
-        prime: SRA.bigIntToString(kp.prime),
-        enc: SRA.bigIntToString(kp.enc),
-        dec: SRA.bigIntToString(kp.dec),
+        prime: BigIntUtils.bigIntToString(kp.prime),
+        enc: BigIntUtils.bigIntToString(kp.enc),
+        dec: BigIntUtils.bigIntToString(kp.dec),
     };
 }
 
 function deserializeSRAKeyPair(kp: SerializedSRAKeyPair): SRAKeyPair {
     return {
-        prime: SRA.stringToBigInt(kp.prime),
-        enc: SRA.stringToBigInt(kp.enc),
-        dec: SRA.stringToBigInt(kp.dec),
+        prime: BigIntUtils.stringToBigInt(kp.prime),
+        enc: BigIntUtils.stringToBigInt(kp.enc),
+        dec: BigIntUtils.stringToBigInt(kp.dec),
     };
 }
 
@@ -74,7 +74,7 @@ function makePlay(
     clientId: ClientId,
     selection: PlaySelection
 ): [PlayAction, RevealAction] {
-    const kp = SRA.generateKeyPair(BigIntMath.randPrime());
+    const kp = SRA.generateKeyPair(BigIntUtils.randPrime());
 
     return [
         {

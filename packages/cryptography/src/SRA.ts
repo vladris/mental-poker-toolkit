@@ -1,6 +1,7 @@
 // Implementation of SRA (Shamir-Rivest-Adleman) commutative encryption
 // algorithm. This is not RSA - same authors, different algorithm.
 import { BigIntMath } from "./bigIntMath";
+import { BigIntUtils } from "./bigIntUtils";
 
 // SRA key pair consists of an agreed-upon large prime and enc and dec
 // primes derived from it (private) and used to encrypt/decrypt
@@ -57,13 +58,17 @@ export namespace SRA {
     // Encrypts a string
     export function encryptString(clearText: string, kp: SRAKeyPair): string {
         // Convert string to a bigint, encrypt that, then convert back
-        return bigIntToString(encryptInt(stringToBigInt(clearText), kp));
+        return BigIntUtils.bigIntToString(
+            encryptInt(BigIntUtils.stringToBigInt(clearText), kp)
+        );
     }
 
     // Decrypts a string
     export function decryptString(cypherText: string, kp: SRAKeyPair): string {
         // Convert string to a bigint, decrypt that, then convert back
-        return bigIntToString(decryptInt(stringToBigInt(cypherText), kp));
+        return BigIntUtils.bigIntToString(
+            decryptInt(BigIntUtils.stringToBigInt(cypherText), kp)
+        );
     }
 
     // Encrypts a bigint n
@@ -76,39 +81,5 @@ export namespace SRA {
     function decryptInt(n: bigint, kp: SRAKeyPair) {
         // Decryption consists of raising n to dec modulo agreed-upon prime
         return BigIntMath.exp(n, kp.dec, kp.prime);
-    }
-
-    // Converts a string into bigint - shouldn't be exported but we need this
-    // since BigInt is not serializable
-    export function stringToBigInt(str: string): bigint {
-        let result = BigInt(0);
-
-        for (const c of str) {
-            // Making an assumption here that we're dealing with char codes under 256
-            // to keep things simple. Might need to revisit if we want to generalize.
-            if (c.charCodeAt(0) > 255) {
-                throw Error(`Unexpected char code ${c.charCodeAt(0)} for ${c}`);
-            }
-
-            // Build a bigint out of all the char codes in the string
-            result = result * BigInt(256) + BigInt(c.charCodeAt(0));
-        }
-
-        return result;
-    }
-
-    // Converts a bigint into a string - shouldn't be exported but we need this
-    // since BigInt is not serializable
-    export function bigIntToString(n: bigint): string {
-        let result = "";
-        let m = BigInt(0);
-
-        // Inverse of stringToBigInt - decompose n to char codes
-        while (n > 0) {
-            [n, m] = [n / BigInt(256), n % BigInt(256)];
-            result = String.fromCharCode(Number(m)) + result;
-        }
-
-        return result;
     }
 }

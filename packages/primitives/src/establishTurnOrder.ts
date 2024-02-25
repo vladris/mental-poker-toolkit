@@ -1,6 +1,6 @@
 import { StateMachine } from "@mental-poker-toolkit/state-machine";
 import { BaseAction, ClientId, IQueue } from "@mental-poker-toolkit/types";
-import { BigIntMath, SRA } from "@mental-poker-toolkit/cryptography";
+import { BigIntUtils } from "@mental-poker-toolkit/cryptography";
 
 // Workaround for BigInt serialization not being supported
 type SerializedPrime = string;
@@ -45,7 +45,7 @@ export async function establishTurnOrder<T extends BaseAction>(
 
         // First client to post sets the shared prime
         if (context.turnOrder.length === 0) {
-            context.prime = SRA.stringToBigInt(action.prime);
+            context.prime = BigIntUtils.stringToBigInt(action.prime);
         }
 
         // Each client should only post once
@@ -62,7 +62,7 @@ export async function establishTurnOrder<T extends BaseAction>(
     await (actionQueue as unknown as IQueue<EstablishTurnOrderAction>).enqueue({
         type: "EstablishTurnOrder",
         clientId: context.clientId,
-        prime: SRA.bigIntToString(BigIntMath.randPrime()),
+        prime: BigIntUtils.bigIntToString(BigIntUtils.randPrime()),
     });
 
     // Create state machine

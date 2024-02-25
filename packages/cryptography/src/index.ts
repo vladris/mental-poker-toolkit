@@ -1,3 +1,3 @@
-export * from "./bigIntMath";
+export * from "./bigIntUtils";
 export * from "./signing";
 export * from "./SRA";
