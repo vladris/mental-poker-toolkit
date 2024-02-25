@@ -42,6 +42,7 @@ packages in this repo, including:
   implementation for it.
 - [x] A decorator providing message signing and authentication for client
   communication.
-- [ ] A state machine for modeling games.
+- [x] An async queue abstraction over the transport layer.
+- [x] A state machine for modeling games.
 - [ ] Primitives for common game actions like handling a deck of cards.
 - [ ] Documentation and recipes for various games.
