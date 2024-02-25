@@ -3,34 +3,34 @@ import {
     BaseAction,
     ClientId,
     IQueue,
-    ITransport,
     Key,
     KeyStore,
     PublicPrivateKeyPair,
-    Signed,
 } from "@mental-poker-toolkit/types";
 import { Signing } from "@mental-poker-toolkit/cryptography";
 
+// Action for exchanging public keys
 export type KeyExchangeAction = BaseAction & { publicKey: Key };
 
+// Context for the key exchange protocol
 export type CryptoContext = {
     clientId: ClientId;
     me: PublicPrivateKeyPair;
-    first: ClientId | undefined;
     keyStore: KeyStore;
 };
 
+// Create a new crypto context
 export async function makeCryptoContext(
     clientId: ClientId
 ): Promise<CryptoContext> {
     return {
         clientId,
         me: await Signing.generatePublicPrivateKeyPair(),
-        first: undefined,
         keyStore: new Map<ClientId, Key>(),
     };
 }
 
+// Perform a public key exchange for a given number of players
 export async function keyExchange(
     players: number,
     context: CryptoContext,
@@ -38,18 +38,13 @@ export async function keyExchange(
 ) {
     const setKey = (action: KeyExchangeAction, context: CryptoContext) => {
         // This should be a KeyExchangeAction
-        if (action.type !== "keyExchange") {
+        if (action.type !== "KeyExchange") {
             return false;
         }
 
         // Protocol expects clients to post an ID
         if (action.clientId === undefined) {
             return false;
-        }
-
-        // Remember the first client that posted
-        if (context.first === undefined) {
-            context.first = action.clientId;
         }
 
         // Protocol expects each client to only post once and to have a unique ID
@@ -63,7 +58,7 @@ export async function keyExchange(
 
     // Post public key
     await actionQueue.enqueue({
-        type: "keyExchange",
+        type: "KeyExchange",
         clientId: context.clientId,
         publicKey: context.me.publicKey,
     });

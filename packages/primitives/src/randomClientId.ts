@@ -1,8 +1,94 @@
 // Random ID generator
-const adjective = ['amazing', 'brave', 'courageous', 'daring', 'epic', 'fearless', 'gallant', 'heroic', 'intrepid', 'jovial', 'keen', 'lively', 'merry', 'noble', 'outstanding', 'plucky', 'quick', 'resolute', 'stalwart', 'tireless', 'unyielding', 'valiant', 'wily', 'xenial', 'youthful', 'zealous'];
-const color = ['azure', 'blue', 'crimson', 'dusky', 'emerald', 'fuchsia', 'gold', 'hazel', 'indigo', 'jade', 'khaki', 'lavender', 'magenta', 'navy', 'olive', 'purple', 'quartz', 'red', 'sapphire', 'teal', 'umber', 'violet', 'white', 'xanthic', 'yellow', 'zaffre'];
-const noun = ['archer', 'bard', 'cleric', 'druid', 'enchanter', 'fighter', 'guardian', 'hunter', 'illusionist', 'jester', 'knight', 'lancer', 'mage', 'necromancer', 'oracle', 'paladin', 'quartermaster', 'ranger', 'sorcerer', 'templar', 'undertaker', 'vanguard', 'warrior', 'xenomancer', 'yogi', 'zealot'];
+const adjective = [
+    "amazing",
+    "brave",
+    "courageous",
+    "daring",
+    "epic",
+    "fearless",
+    "gallant",
+    "heroic",
+    "intrepid",
+    "jovial",
+    "keen",
+    "lively",
+    "merry",
+    "noble",
+    "outstanding",
+    "plucky",
+    "quick",
+    "resolute",
+    "stalwart",
+    "tireless",
+    "unyielding",
+    "valiant",
+    "wily",
+    "xenial",
+    "youthful",
+    "zealous",
+];
+const color = [
+    "azure",
+    "blue",
+    "crimson",
+    "dusky",
+    "emerald",
+    "fuchsia",
+    "gold",
+    "hazel",
+    "indigo",
+    "jade",
+    "khaki",
+    "lavender",
+    "magenta",
+    "navy",
+    "olive",
+    "purple",
+    "quartz",
+    "red",
+    "sapphire",
+    "teal",
+    "umber",
+    "violet",
+    "white",
+    "xanthic",
+    "yellow",
+    "zaffre",
+];
+const noun = [
+    "archer",
+    "bard",
+    "cleric",
+    "druid",
+    "enchanter",
+    "fighter",
+    "guardian",
+    "hunter",
+    "illusionist",
+    "jester",
+    "knight",
+    "lancer",
+    "mage",
+    "necromancer",
+    "oracle",
+    "paladin",
+    "quartermaster",
+    "ranger",
+    "sorcerer",
+    "templar",
+    "undertaker",
+    "vanguard",
+    "warrior",
+    "xenomancer",
+    "yogi",
+    "zealot",
+];
 
+// Generate a random client ID of the form "adjective-color-noun"
+// Note this is not guaranteed to be unique across clients - a proper implementation should
+// either use UUIDs or handle cases where IDs conflict. This is not covered in our demos.
 export function randomClientId() {
-    return `${adjective[Math.floor(Math.random() * adjective.length)]}-${color[Math.floor(Math.random() * color.length)]}-${noun[Math.floor(Math.random() * noun.length)]}`;
+    return `${adjective[Math.floor(Math.random() * adjective.length)]}-${
+        color[Math.floor(Math.random() * color.length)]
+    }-${noun[Math.floor(Math.random() * noun.length)]}`;
 }
