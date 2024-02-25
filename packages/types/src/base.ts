@@ -1,4 +1,5 @@
-import { ClientId } from "./primitives";
+// Client ID
+export type ClientId = string;
 
 // Base Action for modeling games
 export type BaseAction = {

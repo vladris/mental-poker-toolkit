@@ -1,4 +1,4 @@
-import { ClientId } from "./primitives";
+import { ClientId } from "./base";
 
 // Keys are represented as strings
 export type Key = string;

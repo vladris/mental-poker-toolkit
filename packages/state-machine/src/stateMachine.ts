@@ -1,7 +1,7 @@
 import {
     BaseAction,
     IStateMachine,
-    ITransport,
+    IQueue,
     Transition,
 } from "@mental-poker-toolkit/types";
 import { Sequence } from "./sequence";
@@ -39,27 +39,23 @@ export namespace StateMachine {
         return new Connection(stateMachine1, stateMachine2);
     }
 
-    export function run<TAction extends BaseAction, TContext>(
+    export async function run<TAction extends BaseAction, TContext>(
         stateMachine: IStateMachine<TAction, TContext>,
-        transport: ITransport<TAction>,
+        queue: IQueue<TAction>,
         context: TContext
-    ): Promise<void> {
-        // Create a promise that resolves when the state machine is done
-        return new Promise<void>((resolve, reject) => {
-            const listener = (action: TAction) => {
-                if (!stateMachine.accept(action, context)) {
-                    reject(new Error(`Invalid action ${action}`));
-                }
+    ) {
+        // Run state machine until done
+        while (!stateMachine.done()) {
+            // Dequeue action
+            const action = await queue.dequeue();
 
-                if (stateMachine.done()) {
-                    stateMachine.reset();
+            // If action is not accepted, throw error
+            if (!stateMachine.accept(action, context)) {
+                throw new Error(`Invalid action ${action}`);
+            }
+        }
 
-                    // Remove event listener
-                    transport.off("actionPosted", listener);
-                    resolve();
-                }
-            };
-            transport.on("actionPosted", listener);
-        });
+        // Reset state machine
+        stateMachine.reset();
     }
 }

@@ -2,6 +2,7 @@ import { StateMachine } from "@mental-poker-toolkit/state-machine";
 import {
     BaseAction,
     ClientId,
+    IQueue,
     ITransport,
     Key,
     KeyStore,
@@ -33,7 +34,7 @@ export async function makeCryptoContext(
 export async function keyExchange(
     players: number,
     context: CryptoContext,
-    transport: ITransport<KeyExchangeAction>
+    actionQueue: IQueue<KeyExchangeAction>
 ) {
     const setKey = (action: KeyExchangeAction, context: CryptoContext) => {
         // This should be a KeyExchangeAction
@@ -61,32 +62,15 @@ export async function keyExchange(
     };
 
     // Post public key
-    transport.postAction({
+    await actionQueue.enqueue({
         type: "keyExchange",
         clientId: context.clientId,
         publicKey: context.me.publicKey,
     });
 
-    // Process existing public keys
-    for (const action of transport.getActions()) {
-        if (!setKey(action, context)) {
-            throw new Error(`Invalid action ${action}`);
-        }
+    // Create state machine
+    const keyExchangeSequence = StateMachine.sequenceN(setKey, players);
 
-        // If we have all the keys, we're done
-        if (context.keyStore.size === players) {
-            return Promise.resolve();
-        }
-    }
-
-    // Wait for the rest of the players
-    const waitForPlayers = StateMachine.sequenceN(
-        setKey,
-        players - context.keyStore.size
-    );
-
-    // Store result promise
-    const result = StateMachine.run(waitForPlayers, transport, context);
-
-    return result;
+    // Run state machine
+    await StateMachine.run(keyExchangeSequence, actionQueue, context);
 }

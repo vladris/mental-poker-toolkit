@@ -1,4 +1,4 @@
-import { BaseAction } from "./action";
+import { BaseAction } from "./base";
 
 // Check if valid transition
 export type Transition<TAction extends BaseAction, TContext> = (

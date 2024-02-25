@@ -1,6 +1,6 @@
 // Implementation of SRA (Shamir-Rivest-Adleman) commutative encryption
 // algorithm. This is not RSA - same authors, different algorithm.
-import "./bigIntMath";
+import { BigIntMath } from "./bigIntMath";
 
 // SRA key pair consists of an agreed-upon large prime and enc and dec
 // primes derived from it (private) and used to encrypt/decrypt
@@ -79,7 +79,7 @@ export namespace SRA {
     }
 
     // Converts a string into bigint
-    function stringToBigInt(str: string): bigint {
+    export function stringToBigInt(str: string): bigint {
         let result = BigInt(0);
 
         for (const c of str) {
@@ -97,7 +97,7 @@ export namespace SRA {
     }
 
     // Converts a bigint into a string
-    function bigIntToString(n: bigint): string {
+    export function bigIntToString(n: bigint): string {
         let result = "";
         let m = BigInt(0);
 

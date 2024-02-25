@@ -1,6 +1,6 @@
 // We need bigints to implement SRA algorithm, turns out most of the "batteries
 // included" math in JS only works on number so here we go...
-namespace BigIntMath {
+export namespace BigIntMath {
     // Raises b to power e modulo m
     export function exp(b: bigint, e: bigint, m: bigint): bigint {
         // Implemented as ancient Egyptian multiplication algorithm which is log(e)

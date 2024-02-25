@@ -1,6 +1,7 @@
 import { useSelector as useReduxSelector, TypedUseSelectorHook } from "react-redux";
 import { ButtonsView } from "./buttonsView";
 import { RootState  } from "./store";
+import { playRound } from "./model";
 
 export const useSelector: TypedUseSelectorHook<RootState> = useReduxSelector;
 
@@ -15,6 +16,6 @@ export const MainView = () => {
         <p>Other player: {otherPlayer.value}</p>
         <p>Status: {gameStateSelector.value}</p>
         </div>
-        <ButtonsView onPlay={(s) => {console.log(s)}}></ButtonsView>
+        <ButtonsView disabled={gameStateSelector.value === "Waiting"} onPlay={playRound}></ButtonsView>
     </div>
 }

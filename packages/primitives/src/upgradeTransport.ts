@@ -4,14 +4,20 @@ import {
     keyExchange,
     makeCryptoContext,
 } from "./keyExchange";
-import { BaseAction, ClientId, ITransport } from "@mental-poker-toolkit/types";
+import {
+    BaseAction,
+    ClientId,
+    IQueue,
+    ITransport,
+} from "@mental-poker-toolkit/types";
+import { ActionQueue } from "@mental-poker-toolkit/action-queue";
 
-// Upgrade an unsigned transport to a signed transport
+// Upgrade an unsigned transport to a queue over signed transport.
 export async function upgradeTransport<T extends BaseAction>(
     players: number,
     clientId: ClientId,
     transport: ITransport<T>
-): Promise<ITransport<T>> {
+): Promise<IQueue<T>> {
     // Create CryptoContext
     const context = await makeCryptoContext(clientId);
 
@@ -19,13 +25,18 @@ export async function upgradeTransport<T extends BaseAction>(
     await keyExchange(
         players,
         context,
-        transport as unknown as ITransport<KeyExchangeAction>
+        new ActionQueue(
+            transport as unknown as ITransport<KeyExchangeAction>,
+            true
+        )
     );
 
-    // Create a signed transport
-    return new SignedTransport(
-        transport,
-        { clientId: context.clientId, privateKey: context.me.privateKey },
-        context.keyStore
+    // Create a queue over a signed transport
+    return new ActionQueue(
+        new SignedTransport(
+            transport,
+            { clientId: context.clientId, privateKey: context.me.privateKey },
+            context.keyStore
+        )
     );
 }
