@@ -78,7 +78,8 @@ export namespace SRA {
         return BigIntMath.exp(n, kp.dec, kp.prime);
     }
 
-    // Converts a string into bigint
+    // Converts a string into bigint - shouldn't be exported but we need this
+    // since BigInt is not serializable
     export function stringToBigInt(str: string): bigint {
         let result = BigInt(0);
 
@@ -96,7 +97,8 @@ export namespace SRA {
         return result;
     }
 
-    // Converts a bigint into a string
+    // Converts a bigint into a string - shouldn't be exported but we need this
+    // since BigInt is not serializable
     export function bigIntToString(n: bigint): string {
         let result = "";
         let m = BigInt(0);
