@@ -2,9 +2,10 @@ import ReactDOM from "react-dom/client";
 import { Provider } from "react-redux";
 import { getLedger } from "@mental-poker-toolkit/demo-transport";
 import { establishTurnOrder, randomClientId, shuffle, upgradeTransport } from "@mental-poker-toolkit/primitives";
-import { Action, getDeck } from "./model";
+import { Action } from "./model";
 import { MainView } from "./mainView";
-import { store, updateId, updateOtherPlayer, updateQueue } from "./store";
+import { store, updateDeck, updateGameStatus, updateId, updateOtherPlayer, updateQueue } from "./store";
+import { Deck, getDeck } from "./deck";
 
 // Initialization - we first connect to the Fluid session
 getLedger<Action>().then(async (ledger) => {
@@ -23,22 +24,22 @@ getLedger<Action>().then(async (ledger) => {
     // Extract other player's id and store it
     for (const action of ledger.getActions()) {
         if (action.clientId !== id) {
-            store.dispatch(updateOtherPlayer(action.clientId));
+            await store.dispatch(updateOtherPlayer(action.clientId));
             break;
         }
     }
 
-    console.log("Establishing turn order");
-
+    // Establish turn order and shared prime
     const [sharedPrime, turnOrder] = await establishTurnOrder(2, id, queue);
 
-    console.log("Shuffling deck");
+    await store.dispatch(updateGameStatus("Shuffling"));
 
-    // This example uses a smaller key size to makes things faster but less secure
+    // Shuffle - this example uses a smaller key size to makes things faster but less secure
     const [keys, deck] = await shuffle(id, turnOrder, sharedPrime, getDeck(), queue, 64);
-
-    console.log(keys);
-    console.log(deck);
+ 
+    // Store deck and update status
+    await store.dispatch(updateDeck(new Deck(deck, keys)));
+    await store.dispatch(updateGameStatus(turnOrder[0] === id ? "MyTurn" : "OthersTurn"));
 });
 
 // Set up React

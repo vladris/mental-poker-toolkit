@@ -136,10 +136,7 @@ export async function playRound(selection: PlaySelection) {
                     })
                 );
             }), 2)
-        ]),
-        queue,
-        context
-    )
+        ]), queue, context);
 
     // Determine game result
     const myPlay = context.getState().myPlay.value;

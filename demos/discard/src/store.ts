@@ -1,18 +1,24 @@
 import { configureStore, createAction, createReducer } from "@reduxjs/toolkit";
-import { Action } from "./model";
+import { Action, GameStatus } from "./model";
 import { IQueue } from "@mental-poker-toolkit/types";
+import { Deck } from "./deck";
 
 /*
 Game state consists of the following:
 id          - Our ID
 otherPlayer - Other player ID
 queue       - Action queue
+gameStatus  - Game status
+deck        - Deck of cards
+keys        - My SRA keys
 */
 
 // Update actions
 export const updateId = createAction<string>("id/update");
 export const updateOtherPlayer = createAction<string>("otherPlayer/update");
 export const updateQueue = createAction<IQueue<Action>>("queue/update");
+export const updateGameStatus = createAction<GameStatus>("gameStatus/update");
+export const updateDeck = createAction<Deck>("deck/update");
 
 // Helper function to create a reducer with an update action
 function makeUpdateReducer<T>(
@@ -35,6 +41,8 @@ export const store = configureStore({
             undefined,
             updateQueue
         ),
+        gameStatus: makeUpdateReducer("Waiting", updateGameStatus),
+        deck: makeUpdateReducer<Deck | undefined>(undefined, updateDeck),
     },
     middleware: (getDefaultMiddleware) =>
         // Fluid ledger and abstractions over it are non-serializable but we
