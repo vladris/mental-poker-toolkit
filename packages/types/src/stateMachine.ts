@@ -4,7 +4,7 @@ import { BaseAction } from "./base";
 export type Transition<TAction extends BaseAction, TContext> = (
     action: TAction,
     context: TContext
-) => boolean;
+) => boolean | Promise<boolean>;
 
 // State machine interface
 export interface IStateMachine<TAction extends BaseAction, TContext> {
