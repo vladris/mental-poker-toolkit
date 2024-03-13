@@ -51,7 +51,7 @@ export namespace StateMachine {
 
             // If action is not accepted, throw error
             if (!stateMachine.accept(action, context)) {
-                throw new Error(`Invalid action ${action}`);
+                throw new Error(`Invalid action ${JSON.stringify(action)}`);
             }
         }
 

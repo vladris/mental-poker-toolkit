@@ -11,7 +11,8 @@
     "packages/state-machine",
     "packages/primitives",
     "demos/transport",
-    "demos/rock-paper-scissors"
+    "demos/rock-paper-scissors",
+    "demos/discard"
   ],
   "scripts": {
     "build": "npm run build --ws"

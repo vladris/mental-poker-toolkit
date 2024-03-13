@@ -1,0 +1,49 @@
+{
+  "name": "@mental-poker-toolkit/discard",
+  "version": "1.0.0",
+  "private": true,
+  "dependencies": {
+    "@mental-poker-toolkit/cryptography": "^0.0.1",
+    "@mental-poker-toolkit/demo-transport": "^1.0.0",
+    "@mental-poker-toolkit/fluid-client": "^0.0.1",
+    "@mental-poker-toolkit/primitives": "^0.0.1",
+    "@mental-poker-toolkit/signed-transport": "^0.0.1",
+    "@mental-poker-toolkit/state-machine": "^0.0.1",
+    "@mental-poker-toolkit/types": "^0.0.1",
+    "@reduxjs/toolkit": "^2.2.1",
+    "react": "^18.2.0",
+    "react-dom": "^18.2.0",
+    "react-redux": "^9.1.0",
+    "react-scripts": "5.0.1",
+    "url": "^0.11.0"
+  },
+  "scripts": {
+    "start": "npm run start:server 7070 & npm run start:client",
+    "start:client": "react-scripts start",
+    "start:server": "npx @fluidframework/azure-local-service@latest",
+    "build": "react-scripts build",
+    "eject": "react-scripts eject"
+  },
+  "eslintConfig": {
+    "extends": [
+      "react-app",
+      "react-app/jest"
+    ]
+  },
+  "browserslist": {
+    "production": [
+      ">0.2%",
+      "not dead",
+      "not op_mini all"
+    ],
+    "development": [
+      "last 1 chrome version",
+      "last 1 firefox version",
+      "last 1 safari version"
+    ]
+  },
+  "devDependencies": {
+    "@types/react": "^18.2.58",
+    "@types/react-dom": "^18.2.19"
+  }
+}
