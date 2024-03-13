@@ -1,5 +1,5 @@
 import { BaseAction, IQueue, SRAKeyPair } from "@mental-poker-toolkit/types";
-import { KeyProvider, makeKeyQueue } from "./keyQueue";
+import { KeyProvider } from "./keyProvider";
 import { SRA } from "@mental-poker-toolkit/cryptography";
 import { StateMachine } from "@mental-poker-toolkit/state-machine";
 
@@ -34,26 +34,26 @@ function shuffleArray<T>(arr: T[]): T[] {
 };
 
 // First shuffle step
-async function shuffle1(getKeyPair: KeyProvider, deck: string[]): Promise<[SRAKeyPair, string[]]> {
-    const commonKey = await getKeyPair();
+async function shuffle1(keyProvider: KeyProvider, deck: string[]): Promise<[SRAKeyPair, string[]]> {
+    const commonKey = keyProvider.make();
 
     // Encrypt each card with the common key and shuffle the deck
-    deck = shuffleArray(deck.map((card) => SRA.encrypt(card, commonKey)));
+    deck = shuffleArray(deck.map((card) => SRA.encryptString(card, commonKey)));
 
     return [commonKey, deck];
 };
 
 // Second shuffle step
-async function shuffle2(commonKey: SRAKeyPair, getKeyPair: KeyProvider, deck: string[]): Promise<[SRAKeyPair[], string[]]> {
+async function shuffle2(commonKey: SRAKeyPair, keyProvider: KeyProvider, deck: string[]): Promise<[SRAKeyPair[], string[]]> {
     const privateKeys: SRAKeyPair[] = [];
 
     // Decrypt each card with the common key
-    deck = deck.map((card) => SRA.decrypt(card, commonKey));
+    deck = deck.map((card) => SRA.decryptString(card, commonKey));
 
     // For each card, generate a new key pair and re-encrypt
     for (let i = 0; i < deck.length; i++) {
-        privateKeys.push(await getKeyPair());
-        deck[i] = SRA.encrypt(deck[i], privateKeys[i]);
+        privateKeys.push(keyProvider.make());
+        deck[i] = SRA.encryptString(deck[i], privateKeys[i]);
     }
 
     return [privateKeys, deck];
@@ -65,9 +65,10 @@ export async function shuffle<T extends BaseAction, K>(
     turnOrder: string[],
     sharedPrime: bigint,
     deck: string[],
-    actionQueue: IQueue<T>
+    actionQueue: IQueue<T>,
+    keySize: number = 128 // Key size, defaults to 128 bytes
 ): Promise<[SRAKeyPair[], string[]]> {
-    const getKeyPair = makeKeyQueue(sharedPrime, deck.length + 1);
+    const keyProvider = new KeyProvider(sharedPrime, keySize);
 
     const context: ShuffleContext = { clientId, deck };
 
@@ -79,7 +80,7 @@ export async function shuffle<T extends BaseAction, K>(
     const shuffleQueue = actionQueue as unknown as IQueue<ShuffleAction1 | ShuffleAction2>;
 
     const enqueueShuffle1 = async (context: ShuffleContext) => {
-        [context.commonKey, context.deck] = await shuffle1(getKeyPair, context.deck);
+        [context.commonKey, context.deck] = await shuffle1(keyProvider, context.deck);
 
         await shuffleQueue.enqueue({
             type: "Shuffle1",
@@ -88,7 +89,7 @@ export async function shuffle<T extends BaseAction, K>(
         });
     }
 
-    const shuffleStep1 = (action: ShuffleAction1, context: ShuffleContext) => {
+    const shuffleStep1 = async (action: ShuffleAction1, context: ShuffleContext) => {
         // This should be a Shuffle1 action
         if (action.type !== "Shuffle1") {
             return false;
@@ -99,14 +100,14 @@ export async function shuffle<T extends BaseAction, K>(
 
         // Second player should enqueue a shuffle1 action
         if (!imFirst) {
-            enqueueShuffle1(context);
+            await enqueueShuffle1(context);
         }
 
         return true;
     };
 
     const enqueueShuffle2 = async (context: ShuffleContext) => {
-        [context.privateKeys, context.deck] = await shuffle2(context.commonKey!, getKeyPair, context.deck);
+        [context.privateKeys, context.deck] = await shuffle2(context.commonKey!, keyProvider, context.deck);
 
         await shuffleQueue.enqueue({
             type: "Shuffle2",
@@ -115,7 +116,7 @@ export async function shuffle<T extends BaseAction, K>(
         });
     }
 
-    const shuffleStep2 = (action: ShuffleAction2, context: ShuffleContext) => {
+    const shuffleStep2 = async (action: ShuffleAction2, context: ShuffleContext) => {
         // This should be a Shuffle2 action
         if (action.type !== "Shuffle2") {
             return false;
@@ -125,8 +126,8 @@ export async function shuffle<T extends BaseAction, K>(
         context.deck = action.deck;
 
         // Second player should enqueue a shuffle2 action
-        if (imFirst) {
-            enqueueShuffle2(context);
+        if (!imFirst) {
+            await enqueueShuffle2(context);
         }
     
         return true;
@@ -134,7 +135,7 @@ export async function shuffle<T extends BaseAction, K>(
 
     // First player kicks off shuffle step 1
     if (imFirst) {
-        enqueueShuffle1(context);
+        await enqueueShuffle1(context);
     }
 
     // Create state machine
@@ -142,7 +143,7 @@ export async function shuffle<T extends BaseAction, K>(
 
     // First player kicks off shuffle step 2
     if (imFirst) {
-        enqueueShuffle2(context);
+        await enqueueShuffle2(context);
     }
     
     await StateMachine.run(StateMachine.sequenceN(shuffleStep2, 2), shuffleQueue, context);
