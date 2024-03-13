@@ -12,13 +12,13 @@ getLedger<Action>().then(async (ledger) => {
     const id = randomClientId();
 
     // Store client ID
-    store.dispatch(updateId(id));
+    await store.dispatch(updateId(id));
 
     // Once other player joins, upgrade transport to one with signature verification
     const queue = await upgradeTransport(2, id, ledger);
 
     // Store action queue
-    store.dispatch(updateQueue(queue));
+    await store.dispatch(updateQueue(queue));
 
     // Extract other player's id and store it
     for (const action of ledger.getActions()) {
@@ -28,11 +28,11 @@ getLedger<Action>().then(async (ledger) => {
         }
     }
 
-    console.log("Establishing turn order")
+    console.log("Establishing turn order");
 
     const [sharedPrime, turnOrder] = await establishTurnOrder(2, id, queue);
 
-    console.log("Shuffling deck")
+    console.log("Shuffling deck");
 
     // This example uses a smaller key size to makes things faster but less secure
     const [keys, deck] = await shuffle(id, turnOrder, sharedPrime, getDeck(), queue, 64);

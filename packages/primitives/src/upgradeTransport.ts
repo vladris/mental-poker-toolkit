@@ -1,9 +1,5 @@
 import { SignedTransport } from "@mental-poker-toolkit/signed-transport";
-import {
-    KeyExchangeAction,
-    keyExchange,
-    makeCryptoContext,
-} from "./keyExchange";
+import { keyExchange } from "./keyExchange";
 import {
     BaseAction,
     ClientId,
@@ -18,15 +14,12 @@ export async function upgradeTransport<T extends BaseAction>(
     clientId: ClientId,
     transport: ITransport<T>
 ): Promise<IQueue<T>> {
-    // Create CryptoContext
-    const context = await makeCryptoContext(clientId);
-
     // Perform key exchange
-    await keyExchange(
+    const [keyPair, keyStore] = await keyExchange(
         players,
-        context,
+        clientId,
         new ActionQueue(
-            transport as unknown as ITransport<KeyExchangeAction>,
+            transport as unknown as ITransport<BaseAction>,
             true
         )
     );
@@ -35,8 +28,8 @@ export async function upgradeTransport<T extends BaseAction>(
     return new ActionQueue(
         new SignedTransport(
             transport,
-            { clientId: context.clientId, privateKey: context.me.privateKey },
-            context.keyStore
+            { clientId, privateKey: keyPair.privateKey },
+            keyStore
         )
     );
 }

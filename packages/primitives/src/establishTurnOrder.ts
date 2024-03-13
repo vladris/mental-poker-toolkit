@@ -1,4 +1,4 @@
-import { StateMachine } from "@mental-poker-toolkit/state-machine";
+import { StateMachine as sm } from "@mental-poker-toolkit/state-machine";
 import { BaseAction, ClientId, IQueue } from "@mental-poker-toolkit/types";
 import { BigIntUtils } from "@mental-poker-toolkit/cryptography";
 
@@ -26,53 +26,50 @@ function makeEstablishTurnOrderContext(
     };
 }
 
+function makeEstablishTurnOrderSequence(players: number) {
+    return sm.sequence([
+        sm.local(async (actionQueue: IQueue<EstablishTurnOrderAction>, context: EstablishTurnOrderContext) => {
+            // Post large prime
+            await actionQueue.enqueue({
+                type: "EstablishTurnOrder",
+                clientId: context.clientId,
+                prime: BigIntUtils.bigIntToString(BigIntUtils.randPrime()),
+            });
+        }),
+        sm.repeat(sm.transition((action: EstablishTurnOrderAction, context: EstablishTurnOrderContext) => {
+            // This should be an EstablishTurnOrderAction
+            if (action.type !== "EstablishTurnOrder") {
+                throw new Error("Invalid action type");
+            }
+
+            // First client to post sets the shared prime
+            if (context.turnOrder.length === 0) {
+                context.prime = BigIntUtils.stringToBigInt(action.prime);
+            }
+
+            // Each client should only post once
+            if (context.turnOrder.find((id) => id === action.clientId)) {
+                throw new Error("Same client posted prime multiple times");
+            }
+
+            context.turnOrder.push(action.clientId); 
+        }), players)
+    ]);
+}
+
 // Perform a public key exchange for a given number of players
-export async function establishTurnOrder<T extends BaseAction>(
+export async function establishTurnOrder(
     players: number,
     clientId: ClientId,
-    actionQueue: IQueue<T>
-): Promise<[bigint, ClientId[]]> {
+    actionQueue: IQueue<BaseAction>
+) {
     const context = makeEstablishTurnOrderContext(clientId);
 
-    const postPrime = (
-        action: EstablishTurnOrderAction,
-        context: EstablishTurnOrderContext
-    ) => {
-        // This should be an EstablishTurnOrderAction
-        if (action.type !== "EstablishTurnOrder") {
-            return false;
-        }
-
-        // First client to post sets the shared prime
-        if (context.turnOrder.length === 0) {
-            context.prime = BigIntUtils.stringToBigInt(action.prime);
-        }
-
-        // Each client should only post once
-        if (context.turnOrder.find((id) => id === action.clientId)) {
-            return false;
-        }
-
-        context.turnOrder.push(action.clientId);
-
-        return true;
-    };
-
-    // Post large prime
-    await (actionQueue as unknown as IQueue<EstablishTurnOrderAction>).enqueue({
-        type: "EstablishTurnOrder",
-        clientId: context.clientId,
-        prime: BigIntUtils.bigIntToString(BigIntUtils.randPrime()),
-    });
-
     // Create state machine
-    const establishTurnOrderSequence = StateMachine.sequenceN(
-        postPrime,
-        players
-    );
+    const establishTurnOrderSequence = makeEstablishTurnOrderSequence(players);
 
     // Run state machine
-    await StateMachine.run(establishTurnOrderSequence, actionQueue, context);
+    await sm.run(establishTurnOrderSequence, actionQueue, context);
 
-    return [context.prime as bigint, context.turnOrder];
+    return [context.prime!, context.turnOrder] as const;
 }
