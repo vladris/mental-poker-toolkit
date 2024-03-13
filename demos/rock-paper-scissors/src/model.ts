@@ -1,6 +1,6 @@
 import { BigIntUtils, SRA } from "@mental-poker-toolkit/cryptography";
 import { ClientId, SRAKeyPair } from "@mental-poker-toolkit/types";
-import { StateMachine } from "@mental-poker-toolkit/state-machine";
+import { StateMachine as sm } from "@mental-poker-toolkit/state-machine";
 import {
     RootStore,
     store,
@@ -69,96 +69,77 @@ export type PlayValue =
     | { type: "Encrypted"; value: EncryptedSelection }
     | { type: "None"; value: undefined };
 
-// Generate the play and reveal actions based on a selection
-function makePlay(
-    clientId: ClientId,
-    selection: PlaySelection
-): [PlayAction, RevealAction] {
-    const kp = SRA.generateKeyPair(BigIntUtils.randPrime());
-
-    return [
-        {
-            clientId,
-            type: "PlayAction",
-            encryptedSelection: SRA.encryptString(selection, kp),
-        },
-        { clientId, type: "RevealAction", key: serializeSRAKeyPair(kp) },
-    ];
-}
-
 // Play a round of rock-paper-scissors
 export async function playRound(selection: PlaySelection) {
     // Grab store
     const context = store;
 
     // Upadate game status
-    context.dispatch(updateGameStatus("Waiting"));
-
-    // Create play and reveal actions
-    const [playAction, revealAction] = makePlay(
-        store.getState().id.value,
-        selection
-    );
+    await context.dispatch(updateGameStatus("Waiting"));
 
     // Get a reference to the action queue from the store
     const queue = store.getState().queue.value!;
 
-    // A play turn consists of posting the encrypted selection
-    const playTurn = (play: PlayAction, context: RootStore) => {
-        const action =
-            play.clientId === context.getState().id.value
-                ? updateMyPlay
-                : updateTheirPlay;
+    // Generate a new key pair
+    const kp = SRA.generateKeyPair(BigIntUtils.randPrime());
 
-        context.dispatch(
-            action({ type: "Encrypted", value: play.encryptedSelection })
-        );
+    await sm.run(sm.sequence([
+            // Post our play action
+            sm.local(async (queue) => {
+                const playAction = {
+                    clientId: context.getState().id.value,
+                    type: "PlayAction",
+                    encryptedSelection: SRA.encryptString(selection, kp),
+                };
 
-        return true;
-    };
-
-    // Post our play action
-    context.getState().queue.value!.enqueue(playAction);
-
-    // Both player and opponent need to post their encrypted selection
-    await StateMachine.run(
-        StateMachine.sequence([playTurn, playTurn]),
+                await queue.enqueue(playAction);
+            }),
+            // Both player and opponent need to post their encrypted selection
+            sm.repeat(sm.transition(async (play: PlayAction, context: RootStore) => {
+                const action =
+                play.clientId === context.getState().id.value
+                    ? updateMyPlay
+                    : updateTheirPlay;
+    
+                await context.dispatch(
+                    action({ type: "Encrypted", value: play.encryptedSelection })
+            );
+            }), 2),
+            // Post our reveal action
+            sm.local(async (queue) => {
+                const revealAction = {
+                    clientId: context.getState().id.value,
+                    type: "RevealAction",
+                    key: serializeSRAKeyPair(kp),
+                };
+                
+                await queue.enqueue(revealAction);
+            }),
+            // Both player and opponent need to reveal their selection
+            sm.repeat(sm.transition(async (reveal: RevealAction, context: RootStore) => {
+                const action =
+                    reveal.clientId === context.getState().id.value
+                        ? updateMyPlay
+                        : updateTheirPlay;
+                const originalValue =
+                    reveal.clientId === context.getState().id.value
+                        ? context.getState().myPlay.value
+                        : context.getState().theirPlay.value;
+    
+                await context.dispatch(
+                    action({
+                        type: "Selection",
+                        value: SRA.decryptString(
+                            originalValue.value as EncryptedSelection,
+                            deserializeSRAKeyPair(reveal.key)
+                        ) as PlaySelection,
+                    })
+                );
+            }), 2)
+        ]),
         queue,
         context
-    );
-
-    // Post our reveal action
-    context.getState().queue.value!.enqueue(revealAction);
-
-    // Second step is to reveal the selection
-    const revealTurn = (reveal: RevealAction, context: RootStore) => {
-        const action =
-            reveal.clientId === context.getState().id.value
-                ? updateMyPlay
-                : updateTheirPlay;
-        const originalValue =
-            reveal.clientId === context.getState().id.value
-                ? context.getState().myPlay.value
-                : context.getState().theirPlay.value;
-
-        context.dispatch(
-            action({
-                type: "Selection",
-                value: SRA.decryptString(
-                    originalValue.value as EncryptedSelection,
-                    deserializeSRAKeyPair(reveal.key)
-                ) as PlaySelection,
-            })
-        );
-
-        return true;
-    };
-
-    await StateMachine.run(
-        StateMachine.sequenceN(revealTurn, 2),
-        queue,
-        context
-    );
+    )
 
     // Determine game result
     const myPlay = context.getState().myPlay.value;
@@ -168,15 +149,15 @@ export async function playRound(selection: PlaySelection) {
 
     if (myPlay.type === "Selection" && theirPlay.type === "Selection") {
         if (myPlay.value === theirPlay.value) {
-            context.dispatch(updateGameStatus("Draw"));
+            await context.dispatch(updateGameStatus("Draw"));
         } else if (
             (myPlay.value === "Rock" && theirPlay.value === "Scissors") ||
             (myPlay.value === "Paper" && theirPlay.value === "Rock") ||
             (myPlay.value === "Scissors" && theirPlay.value === "Paper")
         ) {
-            context.dispatch(updateGameStatus("Win"));
+            await context.dispatch(updateGameStatus("Win"));
         } else {
-            context.dispatch(updateGameStatus("Loss"));
+            await context.dispatch(updateGameStatus("Loss"));
         }
     } else {
         throw new Error("Unexpected game state");

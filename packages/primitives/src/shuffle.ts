@@ -1,7 +1,7 @@
 import { BaseAction, IQueue, SRAKeyPair } from "@mental-poker-toolkit/types";
 import { KeyProvider } from "./keyProvider";
 import { SRA } from "@mental-poker-toolkit/cryptography";
-import { StateMachine } from "@mental-poker-toolkit/state-machine";
+import { StateMachine as sm } from "@mental-poker-toolkit/state-machine";
 
 // Mental Poker shuffle is 2-step
 type ShuffleAction1 = BaseAction & { type: "Shuffle1"; deck: string[] };
@@ -11,6 +11,8 @@ type ShuffleAction2 = BaseAction & { type: "Shuffle2"; deck: string[] };
 type ShuffleContext = {
     clientId: string;
     deck: string[];
+    imFirst: boolean;
+    keyProvider: KeyProvider;
     commonKey?: SRAKeyPair;
     privateKeys?: SRAKeyPair[];
 };
@@ -59,94 +61,132 @@ async function shuffle2(commonKey: SRAKeyPair, keyProvider: KeyProvider, deck: s
     return [privateKeys, deck];
 }
 
+// 2-step Mental Poker shuffle sequence 
+function makeShuffleSequence() {
+    return sm.sequence([
+        sm.local(async (queue: IQueue<ShuffleAction1>, context: ShuffleContext) => {
+            // Don't do anything if we're not the first player
+            if (!context.imFirst) {
+                return;
+            }
+
+            // Otherwise shuffle the deck
+            [context.commonKey, context.deck] = await shuffle1(context.keyProvider, context.deck);
+
+            // Post deck
+            await queue.enqueue({
+                type: "Shuffle1",
+                clientId: context.clientId,
+                deck: context.deck,
+            });
+        }),
+        sm.transition(async (action: ShuffleAction1, context: ShuffleContext) => {
+            // This should be a Shuffle1 action
+            if (action.type !== "Shuffle1") {
+                throw new Error("Invalid action type");
+            }
+
+            // Update deck
+            context.deck = action.deck;
+        }),
+        sm.local(async (queue: IQueue<ShuffleAction1>, context: ShuffleContext) => {
+            // Now don't do anything if we are first player (let other player shuffle)
+            if (context.imFirst) {
+                return;
+            }
+
+            [context.commonKey, context.deck] = await shuffle1(context.keyProvider, context.deck);
+
+            // Post deck
+            await queue.enqueue({
+                type: "Shuffle1",
+                clientId: context.clientId,
+                deck: context.deck,
+            });
+        }),
+        sm.transition(async (action: ShuffleAction1, context: ShuffleContext) => {
+            // This should be a Shuffle1 action
+            if (action.type !== "Shuffle1") {
+                throw new Error("Invalid action type");
+            }
+
+            // Update deck
+            context.deck = action.deck;
+        }),
+        sm.local(async (queue: IQueue<ShuffleAction2>, context: ShuffleContext) => {
+            // Again, only first player should start the second shuffle step
+            if (!context.imFirst) {
+                return;
+            }
+
+            [context.privateKeys, context.deck] = await shuffle2(context.commonKey!, context.keyProvider, context.deck);
+
+            // Post deck
+            await queue.enqueue({
+                type: "Shuffle2",
+                clientId: context.clientId,
+                deck: context.deck,
+            });
+        }),
+        sm.transition(async (action: ShuffleAction2, context: ShuffleContext) => {
+            // This should be a Shuffle2 action
+            if (action.type !== "Shuffle2") {
+                throw new Error("Invalid action type");
+            }
+
+            // Update deck
+            context.deck = action.deck;
+        }),
+        sm.local(async (queue: IQueue<ShuffleAction2>, context: ShuffleContext) => {
+            // Now second player does the second shuffle step
+            if (context.imFirst) {
+                return;
+            }
+
+            [context.privateKeys, context.deck] = await shuffle2(context.commonKey!, context.keyProvider, context.deck);
+
+            // Post deck
+            await queue.enqueue({
+                type: "Shuffle2",
+                clientId: context.clientId,
+                deck: context.deck,
+            });
+        }),
+        sm.transition(async (action: ShuffleAction2, context: ShuffleContext) => {
+            // This should be a Shuffle2 action
+            if (action.type !== "Shuffle2") {
+                throw new Error("Invalid action type");
+            }
+
+            // Update deck
+            context.deck = action.deck;
+        })
+    ]);
+}
+
 // Shuffle deck
-export async function shuffle<T extends BaseAction, K>(
+export async function shuffle(
     clientId: string,
     turnOrder: string[],
     sharedPrime: bigint,
     deck: string[],
-    actionQueue: IQueue<T>,
+    actionQueue: IQueue<BaseAction>,
     keySize: number = 128 // Key size, defaults to 128 bytes
 ): Promise<[SRAKeyPair[], string[]]> {
-    const keyProvider = new KeyProvider(sharedPrime, keySize);
-
-    const context: ShuffleContext = { clientId, deck };
-
     if (turnOrder.length !== 2) {
         throw new Error("Shuffle only implemented for exactly two players");
     }
 
-    const imFirst = clientId === turnOrder[0];
-    const shuffleQueue = actionQueue as unknown as IQueue<ShuffleAction1 | ShuffleAction2>;
-
-    const enqueueShuffle1 = async (context: ShuffleContext) => {
-        [context.commonKey, context.deck] = await shuffle1(keyProvider, context.deck);
-
-        await shuffleQueue.enqueue({
-            type: "Shuffle1",
-            clientId,
-            deck: context.deck,
-        });
-    }
-
-    const shuffleStep1 = async (action: ShuffleAction1, context: ShuffleContext) => {
-        // This should be a Shuffle1 action
-        if (action.type !== "Shuffle1") {
-            return false;
-        }
-
-        // Update deck
-        context.deck = action.deck;
-
-        // Second player should enqueue a shuffle1 action
-        if (!imFirst) {
-            await enqueueShuffle1(context);
-        }
-
-        return true;
+    const context: ShuffleContext = { 
+        clientId, 
+        deck, 
+        imFirst: clientId === turnOrder[0],
+        keyProvider: new KeyProvider(sharedPrime, keySize)
     };
-
-    const enqueueShuffle2 = async (context: ShuffleContext) => {
-        [context.privateKeys, context.deck] = await shuffle2(context.commonKey!, keyProvider, context.deck);
-
-        await shuffleQueue.enqueue({
-            type: "Shuffle2",
-            clientId,
-            deck: context.deck,
-        });
-    }
-
-    const shuffleStep2 = async (action: ShuffleAction2, context: ShuffleContext) => {
-        // This should be a Shuffle2 action
-        if (action.type !== "Shuffle2") {
-            return false;
-        }
-
-        // Update deck
-        context.deck = action.deck;
-
-        // Second player should enqueue a shuffle2 action
-        if (!imFirst) {
-            await enqueueShuffle2(context);
-        }
     
-        return true;
-    };
+    const shuffleSequence = makeShuffleSequence();
 
-    // First player kicks off shuffle step 1
-    if (imFirst) {
-        await enqueueShuffle1(context);
-    }
-
-    // Create state machine
-    await StateMachine.run(StateMachine.sequenceN(shuffleStep1, 2), shuffleQueue, context);
-
-    // First player kicks off shuffle step 2
-    if (imFirst) {
-        await enqueueShuffle2(context);
-    }
-    
-    await StateMachine.run(StateMachine.sequenceN(shuffleStep2, 2), shuffleQueue, context);
+    await sm.run(shuffleSequence, actionQueue, context);
 
     return [context.privateKeys!, context.deck];
 }

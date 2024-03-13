@@ -1,4 +1,4 @@
-import { StateMachine } from "@mental-poker-toolkit/state-machine";
+import { StateMachine as sm } from "@mental-poker-toolkit/state-machine";
 import {
     BaseAction,
     ClientId,
@@ -10,17 +10,17 @@ import {
 import { Signing } from "@mental-poker-toolkit/cryptography";
 
 // Action for exchanging public keys
-export type KeyExchangeAction = BaseAction & { publicKey: Key };
+type KeyExchangeAction = BaseAction & { publicKey: Key };
 
 // Context for the key exchange protocol
-export type CryptoContext = {
+type CryptoContext = {
     clientId: ClientId;
     me: PublicPrivateKeyPair;
     keyStore: KeyStore;
 };
 
 // Create a new crypto context
-export async function makeCryptoContext(
+async function makeCryptoContext(
     clientId: ClientId
 ): Promise<CryptoContext> {
     return {
@@ -30,42 +30,50 @@ export async function makeCryptoContext(
     };
 }
 
+// Create sequence for key exchange
+function makeKeyExchangeSequence(players: number) {
+    return sm.sequence([
+        sm.local(async (actionQueue: IQueue<KeyExchangeAction>, context: CryptoContext) => {
+            // Post public key
+            await actionQueue.enqueue({
+                type: "KeyExchange",
+                clientId: context.clientId,
+                publicKey: context.me.publicKey,
+            });
+        }),
+        sm.repeat(sm.transition((action: KeyExchangeAction, context: CryptoContext) => {
+            // This should be a KeyExchangeAction
+            if (action.type !== "KeyExchange") {
+                throw new Error("Invalid action type");
+            }
+
+            // Protocol expects clients to post an ID
+            if (action.clientId === undefined) {
+                throw new Error("Expected client ID");
+            }
+
+            // Protocol expects each client to only post once and to have a unique ID
+            if (context.keyStore.has(action.clientId)) {
+                throw new Error("Same client posted key multiple times");
+            }
+
+            context.keyStore.set(action.clientId, action.publicKey);
+        }), players)
+    ]);
+}
+
 // Perform a public key exchange for a given number of players
 export async function keyExchange(
     players: number,
-    context: CryptoContext,
-    actionQueue: IQueue<KeyExchangeAction>
+    clientId: ClientId,
+    actionQueue: IQueue<BaseAction>
 ) {
-    const setKey = (action: KeyExchangeAction, context: CryptoContext) => {
-        // This should be a KeyExchangeAction
-        if (action.type !== "KeyExchange") {
-            return false;
-        }
+    const context = await makeCryptoContext(clientId);
 
-        // Protocol expects clients to post an ID
-        if (action.clientId === undefined) {
-            return false;
-        }
-
-        // Protocol expects each client to only post once and to have a unique ID
-        if (context.keyStore.has(action.clientId)) {
-            return false;
-        }
-
-        context.keyStore.set(action.clientId, action.publicKey);
-        return true;
-    };
-
-    // Post public key
-    await actionQueue.enqueue({
-        type: "KeyExchange",
-        clientId: context.clientId,
-        publicKey: context.me.publicKey,
-    });
-
-    // Create state machine
-    const keyExchangeSequence = StateMachine.sequenceN(setKey, players);
+    const keyExchangeSequence = makeKeyExchangeSequence(players); 
 
     // Run state machine
-    await StateMachine.run(keyExchangeSequence, actionQueue, context);
+    await sm.run(keyExchangeSequence, actionQueue, context);
+
+    return [context.me, context.keyStore] as const;
 }
