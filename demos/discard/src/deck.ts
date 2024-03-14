@@ -1,5 +1,6 @@
 import { SRAKeyPair } from "@mental-poker-toolkit/types";
 import { SRA } from "@mental-poker-toolkit/cryptography";
+import { RootStore, updateDeckViewModel } from "./store";
 
 // Get a new deck of cards
 export function getDeck() {
@@ -7,7 +8,7 @@ export function getDeck() {
 
     for (const value of ["2", "3", "4", "5", "6", "7", "8", "9", "10", "J", "Q", "K", "A"]) {
         for (const suit of ["hearths", "diamonds", "clubs", "spades"]) {
-            deck.push(value + suit);
+            deck.push(value + ":" + suit);
         }
     }
 
@@ -26,7 +27,8 @@ export class Deck {
 
     constructor(
         private encryptedCards: string[],
-        private myKeys: SRAKeyPair[]
+        private myKeys: SRAKeyPair[],
+        private store: RootStore
         ) {
         this.drawPile = encryptedCards.map((_, i) => i);
     }
@@ -46,38 +48,65 @@ export class Deck {
             this.decryptedCards[index] = SRA.decryptString(partial, this.othersKeys[index]);
         }
 
-        return this.decryptedCards[index];
+        return this.decryptedCards[index]!;
     }
 
-    // Draw a card
-    draw() {
-        if (this.drawPile.length === 0) {
-            throw new Error("No cards to draw");
-        }
-
-        return this.drawPile.pop() as number;
+    // Top of draw pile
+    getDrawIndex() {
+        return this.drawPile[this.drawPile.length - 1];
     }
 
     // Put a card in my hand
-    putInMyHand(index: number, SRAKeyPair: SRAKeyPair) {
+    async myDraw(SRAKeyPair: SRAKeyPair) {
+        const index = this.drawPile.pop()!;
         this.myCards.push(index);
         this.othersKeys[index] = SRAKeyPair;
-        return index;
+
+        await this.updateViewModel();
     }
 
     // Other player puts a card in their hand
-    putInOthersHand(index: number) {
-        return this.othersCards.push(index);
+    async othersDraw() {
+        this.othersCards.push(this.drawPile.pop()!);
+        
+        await this.updateViewModel();
     }
 
     // Discard a card
-    myDiscard(index: number) {
+    async myDiscard(index: number) {
         this.discardPile.push(this.myCards.splice(this.myCards.indexOf(index), 1)[0]);
+
+        this.updateViewModel();
     }
 
     // The other player discards a card
-    othersDiscard(index: number, SRAKeyPair: SRAKeyPair) {
+    async othersDiscard(index: number, SRAKeyPair: SRAKeyPair) {
         this.othersKeys[index] = SRAKeyPair;
         this.discardPile.push(this.othersCards.splice(this.othersCards.indexOf(index), 1)[0]);
+
+        this.updateViewModel();
+    }
+
+    private async updateViewModel() {
+        await this.store.dispatch(updateDeckViewModel({ 
+            drawPile: this.drawPile.length,
+            discardPile: this.discardPile.map((i) => this.cardAt(i)),
+            myCards: this.myCards.map((i) => this.cardAt(i)),
+            othersHand: this.othersCards.length,
+        }));
     }
 }
+
+export type DeckViewModel = {
+    drawPile: number;
+    discardPile: string[];
+    myCards: string[];
+    othersHand: number;
+};
+
+export const defaultDeckViewModel: DeckViewModel = {
+    drawPile: 0,
+    discardPile: [],
+    myCards: [],
+    othersHand: 0,
+};

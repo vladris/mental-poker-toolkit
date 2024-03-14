@@ -1,6 +1,6 @@
 import { ClientId, IQueue, SRAKeyPair } from "@mental-poker-toolkit/types";
 import { StateMachine as sm } from "@mental-poker-toolkit/state-machine";
-import { RootStore, store, updateDeck, updateGameStatus } from "./store";
+import { RootStore, store, updateGameStatus } from "./store";
 
 export type DrawRequestAction = {
     clientId: ClientId;
@@ -44,7 +44,7 @@ export async function drawCard() {
             queue.enqueue({ 
                 clientId: context.getState().id.value, 
                 type: "DrawRequest",
-                cardIndex: context.getState().deck.value!.draw() });
+                cardIndex: context.getState().deck.value!.getDrawIndex() });
         }),
         sm.transition((action: DrawRequestAction) => {
             // Our own draw request, no need to do anything
@@ -58,10 +58,7 @@ export async function drawCard() {
                 throw new Error("Invalid action type");
             }
 
-            context.getState().deck.value!.putInMyHand(action.cardIndex, action.key);
-            
-            // Trigger an update
-            await context.dispatch(updateDeck(context.getState().deck.value!));
+            await context.getState().deck.value!.myDraw(action.key);
         }),
     ], queue, store);
 
@@ -90,10 +87,7 @@ export async function discardCard(index: number) {
                 throw new Error("Invalid action type");
             }
 
-            context.getState().deck.value!.myDiscard(action.cardIndex);
-
-            // Trigger an update
-            await context.dispatch(updateDeck(context.getState().deck.value!));
+            await context.getState().deck.value!.myDiscard(action.cardIndex);
         }),
     ], queue, store);
 
@@ -115,7 +109,7 @@ export async function waitForOpponent() {
     const queue = store.getState().queue.value!;
 
     while (true) {
-        // Deque the other player's action to decide next steps
+        // Dequeue the other player's action to decide next steps
         const othersAction = await queue.dequeue();
 
         switch (othersAction.type) {
@@ -123,7 +117,7 @@ export async function waitForOpponent() {
                 await sm.run([
                     sm.local(async (queue: IQueue<Action>, context: RootStore) => {
                         // Ensure other player is drawing from the top of the deck
-                        if (othersAction.cardIndex !== store.getState().deck.value!.draw()) {
+                        if (othersAction.cardIndex !== store.getState().deck.value!.getDrawIndex()) {
                             throw new Error("Invalid card index for draw");
                         }
 
@@ -139,15 +133,12 @@ export async function waitForOpponent() {
                             throw new Error("Invalid action type");
                         }
 
-                        context.getState().deck.value!.putInOthersHand(action.cardIndex);
-                        
-                        await context.dispatch(updateDeck(context.getState().deck.value!));
+                        await context.getState().deck.value!.othersDraw();
                     })], queue, store);
                 break;
             case "DiscardRequest":
                 // No need to respond to a discard request, just update state
-                store.getState().deck.value!.othersDiscard(othersAction.cardIndex, othersAction.key); 
-                await store.dispatch(updateDeck(store.getState().deck.value!));
+                await store.getState().deck.value!.othersDiscard(othersAction.cardIndex, othersAction.key); 
                 break
             case "PassTurn":
                 // The other player passed the turn

@@ -38,7 +38,7 @@ getLedger<Action>().then(async (ledger) => {
     const [keys, deck] = await shuffle(id, turnOrder, sharedPrime, getDeck(), queue, 64);
  
     // Store deck and update status
-    await store.dispatch(updateDeck(new Deck(deck, keys)));
+    await store.dispatch(updateDeck(new Deck(deck, keys, store)));
     await store.dispatch(updateGameStatus(turnOrder[0] === id ? "MyTurn" : "OthersTurn"));
 });
 
