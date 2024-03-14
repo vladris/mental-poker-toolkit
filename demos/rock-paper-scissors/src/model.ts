@@ -1,5 +1,5 @@
-import { BigIntUtils, SRA } from "@mental-poker-toolkit/cryptography";
-import { ClientId, SRAKeyPair } from "@mental-poker-toolkit/types";
+import { BigIntUtils, SRA, SRAKeySerializationHelper } from "@mental-poker-toolkit/cryptography";
+import { ClientId } from "@mental-poker-toolkit/types";
 import { StateMachine as sm } from "@mental-poker-toolkit/state-machine";
 import {
     RootStore,
@@ -8,29 +8,6 @@ import {
     updateMyPlay,
     updateTheirPlay,
 } from "./store";
-
-// Workaround for BigInt serialization not being supported
-type SerializedSRAKeyPair = {
-    prime: string;
-    enc: string;
-    dec: string;
-};
-
-function serializeSRAKeyPair(kp: SRAKeyPair): SerializedSRAKeyPair {
-    return {
-        prime: BigIntUtils.bigIntToString(kp.prime),
-        enc: BigIntUtils.bigIntToString(kp.enc),
-        dec: BigIntUtils.bigIntToString(kp.dec),
-    };
-}
-
-function deserializeSRAKeyPair(kp: SerializedSRAKeyPair): SRAKeyPair {
-    return {
-        prime: BigIntUtils.stringToBigInt(kp.prime),
-        enc: BigIntUtils.stringToBigInt(kp.enc),
-        dec: BigIntUtils.stringToBigInt(kp.dec),
-    };
-}
 
 // Actions:
 
@@ -45,7 +22,7 @@ export type PlayAction = {
 export type RevealAction = {
     clientId: ClientId;
     type: "RevealAction";
-    key: SerializedSRAKeyPair;
+    key: SRAKeySerializationHelper.SerializedSRAKeyPair;
 };
 
 // Action is the union of all possible actions
@@ -110,7 +87,7 @@ export async function playRound(selection: PlaySelection) {
                 const revealAction = {
                     clientId: context.getState().id.value,
                     type: "RevealAction",
-                    key: serializeSRAKeyPair(kp),
+                    key: SRAKeySerializationHelper.serializeSRAKeyPair(kp),
                 };
                 
                 await queue.enqueue(revealAction);
@@ -131,7 +108,7 @@ export async function playRound(selection: PlaySelection) {
                         type: "Selection",
                         value: SRA.decryptString(
                             originalValue.value as EncryptedSelection,
-                            deserializeSRAKeyPair(reveal.key)
+                            SRAKeySerializationHelper.deserializeSRAKeyPair(reveal.key)
                         ) as PlaySelection,
                     })
                 );
