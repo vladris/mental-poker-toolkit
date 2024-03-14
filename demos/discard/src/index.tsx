@@ -2,7 +2,7 @@ import ReactDOM from "react-dom/client";
 import { Provider } from "react-redux";
 import { getLedger } from "@mental-poker-toolkit/demo-transport";
 import { establishTurnOrder, randomClientId, shuffle, upgradeTransport } from "@mental-poker-toolkit/primitives";
-import { Action } from "./model";
+import { Action, deal } from "./model";
 import { MainView } from "./mainView";
 import { store, updateDeck, updateGameStatus, updateId, updateOtherPlayer, updateQueue } from "./store";
 import { Deck, getDeck } from "./deck";
@@ -37,9 +37,18 @@ getLedger<Action>().then(async (ledger) => {
     // Shuffle - this example uses a smaller key size to makes things faster but less secure
     const [keys, deck] = await shuffle(id, turnOrder, sharedPrime, getDeck(), queue, 64);
  
-    // Store deck and update status
+    const imFirst = turnOrder[0] === id;
+
+    // Store deck
     await store.dispatch(updateDeck(new Deck(deck, keys, store)));
-    await store.dispatch(updateGameStatus(turnOrder[0] === id ? "MyTurn" : "OthersTurn"));
+
+    await store.dispatch(updateGameStatus("Dealing"));
+    
+    // Deal cards
+    await deal(imFirst);
+
+    // Update game status
+    await store.dispatch(updateGameStatus(imFirst ? "MyTurn" : "OthersTurn"));
 });
 
 // Set up React

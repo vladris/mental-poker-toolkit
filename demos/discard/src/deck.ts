@@ -1,5 +1,5 @@
 import { SRAKeyPair } from "@mental-poker-toolkit/types";
-import { SRA } from "@mental-poker-toolkit/cryptography";
+import { SRA, SerializedSRAKeyPair, SRAKeySerializationHelper } from "@mental-poker-toolkit/cryptography";
 import { RootStore, updateDeckViewModel } from "./store";
 
 // Get a new deck of cards
@@ -35,7 +35,7 @@ export class Deck {
 
     // Get key at index
     getKey(index: number) {
-        return this.myKeys[index];
+        return SRAKeySerializationHelper.serializeSRAKeyPair(this.myKeys[index]);
     }
 
     // Get decrypted card at index
@@ -57,10 +57,10 @@ export class Deck {
     }
 
     // Put a card in my hand
-    async myDraw(SRAKeyPair: SRAKeyPair) {
+    async myDraw(serializedSRAKeyPair: SerializedSRAKeyPair) {
         const index = this.drawPile.pop()!;
         this.myCards.push(index);
-        this.othersKeys[index] = SRAKeyPair;
+        this.othersKeys[index] = SRAKeySerializationHelper.deserializeSRAKeyPair(serializedSRAKeyPair);
 
         await this.updateViewModel();
     }
@@ -80,8 +80,8 @@ export class Deck {
     }
 
     // The other player discards a card
-    async othersDiscard(index: number, SRAKeyPair: SRAKeyPair) {
-        this.othersKeys[index] = SRAKeyPair;
+    async othersDiscard(index: number, serializedSRAKeyPair: SerializedSRAKeyPair) {
+        this.othersKeys[index] = SRAKeySerializationHelper.deserializeSRAKeyPair(serializedSRAKeyPair);
         this.discardPile.push(this.othersCards.splice(this.othersCards.indexOf(index), 1)[0]);
 
         this.updateViewModel();
