@@ -7,7 +7,7 @@ export function getDeck() {
     const deck: string[] = [];
 
     for (const value of ["2", "3", "4", "5", "6", "7", "8", "9", "10", "J", "Q", "K", "A"]) {
-        for (const suit of ["hearths", "diamonds", "clubs", "spades"]) {
+        for (const suit of ["spades"]) {
             deck.push(value + ":" + suit);
         }
     }
@@ -53,12 +53,12 @@ export class Deck {
 
     // Top of draw pile
     getDrawIndex() {
-        return this.drawPile[this.drawPile.length - 1];
+        return this.drawPile[0];
     }
 
     // Put a card in my hand
     async myDraw(serializedSRAKeyPair: SerializedSRAKeyPair) {
-        const index = this.drawPile.pop()!;
+        const index = this.drawPile.shift()!;
         this.myCards.push(index);
         this.othersKeys[index] = SRAKeySerializationHelper.deserializeSRAKeyPair(serializedSRAKeyPair);
 
@@ -67,7 +67,7 @@ export class Deck {
 
     // Other player puts a card in their hand
     async othersDraw() {
-        this.othersCards.push(this.drawPile.pop()!);
+        this.othersCards.push(this.drawPile.shift()!);
         
         await this.updateViewModel();
     }

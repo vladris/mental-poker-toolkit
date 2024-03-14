@@ -41,17 +41,19 @@ export type GameStatus = "Waiting" | "Shuffling" | "Dealing" | "MyTurn" | "Other
 
 // Deal the cards - each player posts the encrypted keys for the cards the other player is supposed 
 // to draw
-export async function deal(imFirst: boolean) {
+export async function deal(imFirst: boolean, count: number) {
     const queue = store.getState().queue.value!;
+
+    await store.dispatch(updateGameStatus("Dealing"));
 
     // This keeps track of cards the *other* player is supposed to draw, so we can hand them the
     // keys - first player draws first 7, second player draws next 7
-    const cards = new Array(7).fill(0).map((_, i) => imFirst ? i + 7 : i);
+    const cards = new Array(count).fill(0).map((_, i) => imFirst ? i + count : i);
     const keys = cards.map((card) => store.getState().deck.value!.getKey(card)!);
 
     await sm.run(sm.sequence([
         sm.local(async (queue: IQueue<Action>, context: RootStore) => {
-            queue.enqueue({ 
+            await queue.enqueue({ 
                 clientId: context.getState().id.value, 
                 type: "DealAction",
                 cards,
@@ -95,7 +97,7 @@ export async function deal(imFirst: boolean) {
                     await deck.myDraw(action.keys[i]);
                 }
             }
-        }), 0)
+        }), 2)
     ]), queue, store);
 }
 

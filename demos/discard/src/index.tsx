@@ -42,10 +42,8 @@ getLedger<Action>().then(async (ledger) => {
     // Store deck
     await store.dispatch(updateDeck(new Deck(deck, keys, store)));
 
-    await store.dispatch(updateGameStatus("Dealing"));
-    
     // Deal cards
-    await deal(imFirst);
+    await deal(imFirst, 5);
 
     // Update game status
     await store.dispatch(updateGameStatus(imFirst ? "MyTurn" : "OthersTurn"));
