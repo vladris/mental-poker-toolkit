@@ -1,14 +1,14 @@
 import { BigIntUtils } from "./bigIntUtils";
 import { SRAKeyPair } from "@mental-poker-toolkit/types";
 
-// Workaround for BigInt serialization not being supported
-export namespace SRAKeySerializationHelper {
-    export type SerializedSRAKeyPair = {
-        prime: string;
-        enc: string;
-        dec: string;
-    };
+// Workaround for BigInt serialization not being supported via JSON.stringify()/parse()
+export type SerializedSRAKeyPair = {
+    prime: string;
+    enc: string;
+    dec: string;
+};
 
+export namespace SRAKeySerializationHelper {
     export function serializeSRAKeyPair(kp: SRAKeyPair): SerializedSRAKeyPair {
         return {
             prime: BigIntUtils.bigIntToString(kp.prime),

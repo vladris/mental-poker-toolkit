@@ -1,4 +1,4 @@
-import { BigIntUtils, SRA, SRAKeySerializationHelper } from "@mental-poker-toolkit/cryptography";
+import { BigIntUtils, SRA, SerializedSRAKeyPair, SRAKeySerializationHelper } from "@mental-poker-toolkit/cryptography";
 import { ClientId } from "@mental-poker-toolkit/types";
 import { StateMachine as sm } from "@mental-poker-toolkit/state-machine";
 import {
@@ -22,7 +22,7 @@ export type PlayAction = {
 export type RevealAction = {
     clientId: ClientId;
     type: "RevealAction";
-    key: SRAKeySerializationHelper.SerializedSRAKeyPair;
+    key: SerializedSRAKeyPair;
 };
 
 // Action is the union of all possible actions
