@@ -3,6 +3,9 @@ import { SerializedSRAKeyPair } from "@mental-poker-toolkit/cryptography";
 import { StateMachine as sm } from "@mental-poker-toolkit/state-machine";
 import { RootStore, store, updateGameStatus } from "./store";
 
+// Discard game actions
+
+// Deal cards
 export type DealAction = {
     clientId: ClientId;
     type: "DealAction";
@@ -10,12 +13,14 @@ export type DealAction = {
     keys: SerializedSRAKeyPair[];
 }
 
+// Request to draw a card (need key from other player)
 export type DrawRequestAction = {
     clientId: ClientId;
     type: "DrawRequest";
     cardIndex: number;
 }
 
+// Response to draw request (provides key for card)
 export type DrawResponseAction = {
     clientId: ClientId;
     type: "DrawResponse";
@@ -23,6 +28,7 @@ export type DrawResponseAction = {
     key: SerializedSRAKeyPair;
 }
 
+// Request to discard a card (provides key for card to other player)
 export type DiscardRequestAction = {
     clientId: ClientId;
     type: "DiscardRequest";
@@ -30,7 +36,13 @@ export type DiscardRequestAction = {
     key: SerializedSRAKeyPair;
 }
 
-export type Action = DealAction | DrawRequestAction | DrawResponseAction | DiscardRequestAction;
+// Can't move - let's the other player know the game is over
+export type CantMoveAction = {
+    clientId: ClientId;
+    type: "CantMove";
+}
+
+export type Action = DealAction | DrawRequestAction | DrawResponseAction | DiscardRequestAction | CantMoveAction;
 
 export type GameStatus = "Waiting" | "Shuffling" | "Dealing" | "MyTurn" | "OthersTurn" | "Win" | "Loss" | "Draw";
 
@@ -159,8 +171,25 @@ export async function discardCard(index: number) {
         }),
     ], queue, store);
 
-    await store.dispatch(updateGameStatus("OthersTurn"));
-    await waitForOpponent();
+    // If we discarded the last card, we win
+    if (store.getState().deckViewModel.value.myCards.length === 0) {
+        await store.dispatch(updateGameStatus("Win"));
+    // Otherwise it's the other player's turn
+    } else {
+        await store.dispatch(updateGameStatus("OthersTurn"));
+        await waitForOpponent();
+    }
+}
+
+// Let the other player know we can't move
+export async function cantMove() {
+    const queue = store.getState().queue.value!;
+
+    await queue.enqueue({ 
+        clientId: store.getState().id.value, 
+        type: "CantMove" });
+
+    await store.dispatch(updateGameStatus("Loss"));
 }
 
 // Wait for the opponent to take an action and respond based on that
@@ -194,12 +223,24 @@ export async function waitForOpponent() {
 
                     await context.getState().deck.value!.othersDraw();
                 })], queue, store);
+            await store.dispatch(updateGameStatus("MyTurn"));
             break;
         case "DiscardRequest":
             // No need to respond to a discard request, just update state
             await store.getState().deck.value!.othersDiscard(othersAction.cardIndex, othersAction.key);
+
+            // If other player discarded all cards, they win
+            if (store.getState().deckViewModel.value.othersHand === 0) {
+                await store.dispatch(updateGameStatus("Loss"));
+            // Otherwise it's our turn
+            } else {
+                await store.dispatch(updateGameStatus("MyTurn"));
+            }
+
             break;
+        case "CantMove":
+            // Other player can't move, we win
+            await store.dispatch(updateGameStatus("Win"));
+            return;
     }
-    
-    await store.dispatch(updateGameStatus("MyTurn"));
 }

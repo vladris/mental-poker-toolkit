@@ -6,13 +6,21 @@ import { RootStore, updateDeckViewModel } from "./store";
 export function getDeck() {
     const deck: string[] = [];
 
-    for (const value of ["2", "3", "4", "5", "6", "7", "8", "9", "10", "J", "Q", "K", "A"]) {
-        for (const suit of ["spades"]) {
+    for (const value of ["9", "10", "J", "Q", "K", "A"]) {
+        for (const suit of ["hearts", "diamonds", "clubs", "spades"]) {
             deck.push(value + ":" + suit);
         }
     }
 
     return deck;
+}
+
+// Check if two cards match either suit or value
+export function matchSuitOrValue(a: string, b: string) {
+    const [aValue, aSuit] = a.split(":");
+    const [bValue, bSuit] = b.split(":");
+
+    return aValue === bValue || aSuit === bSuit;
 }
 
 // Manages an encrypted deck of cards

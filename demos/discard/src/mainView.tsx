@@ -2,7 +2,8 @@ import { useSelector as useReduxSelector, TypedUseSelectorHook } from "react-red
 import { RootState  } from "./store";
 import { HandView } from "./handView";
 import { CardView } from "./cardView";
-import { discardCard, drawCard } from "./model";
+import { cantMove, discardCard, drawCard } from "./model";
+import { matchSuitOrValue } from "./deck";
 
 export const useSelector: TypedUseSelectorHook<RootState> = useReduxSelector;
 
@@ -13,6 +14,25 @@ export const MainView = () => {
     const deckViewModel = useSelector((state) => state.deckViewModel);
 
     const myTurn = gameStateSelector.value === "MyTurn";
+
+    // Checks whether we can discard a card
+    const canDiscard = (index: number) => {
+        // Can discard anything if there's nothing on the discard pile
+        if (deckViewModel.value.discardPile.length === 0) {
+            return true;
+        }
+
+        return matchSuitOrValue(
+            deckViewModel.value.myCards[index],
+            deckViewModel.value.discardPile[deckViewModel.value.discardPile.length - 1]);
+    }
+
+    // We lose if we can't discard any card and can't draw
+    if (myTurn && 
+        !deckViewModel.value.myCards.some((card) => canDiscard(deckViewModel.value.myCards.indexOf(card))) &&
+        deckViewModel.value.drawPile === 0) {
+        cantMove();
+    }
 
     return <div>
         <div>
@@ -33,8 +53,11 @@ export const MainView = () => {
                 <CardView card={ deckViewModel.value.discardPile[deckViewModel.value.discardPile.length - 1] } />
             </div>
         </div>
-        <div style={{ height: 200, textAlign: "center"  }}>
-            <HandView prefix={"mine"} cards={ deckViewModel.value.myCards } onClick={(index) => { if (myTurn) { discardCard(index) } }} />
+        <div style={{ height: 200, textAlign: "center" }}>
+            <HandView
+                prefix={"mine"}
+                cards={ deckViewModel.value.myCards }
+                onClick={(index) => { if (myTurn && canDiscard(index)) { discardCard(index) } }} />
         </div>
     </div>
 }
