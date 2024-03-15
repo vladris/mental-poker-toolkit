@@ -38,6 +38,11 @@ export class Deck {
         return SRAKeySerializationHelper.serializeSRAKeyPair(this.myKeys[index]);
     }
 
+    // Get key from hand
+    getKeyFromHand(index: number) {
+        return SRAKeySerializationHelper.serializeSRAKeyPair(this.myKeys[this.myCards[index]]);
+    }
+
     // Get decrypted card at index
     cardAt(index: number) {
         if (!this.decryptedCards[index]) {
@@ -74,15 +79,17 @@ export class Deck {
 
     // Discard a card
     async myDiscard(index: number) {
-        this.discardPile.push(this.myCards.splice(this.myCards.indexOf(index), 1)[0]);
+        const cardIndex = this.myCards.splice(index, 1)[0];
+        this.discardPile.push(cardIndex);
 
         this.updateViewModel();
     }
 
     // The other player discards a card
     async othersDiscard(index: number, serializedSRAKeyPair: SerializedSRAKeyPair) {
-        this.othersKeys[index] = SRAKeySerializationHelper.deserializeSRAKeyPair(serializedSRAKeyPair);
-        this.discardPile.push(this.othersCards.splice(this.othersCards.indexOf(index), 1)[0]);
+        const cardIndex = this.othersCards.splice(index, 1)[0];
+        this.othersKeys[cardIndex] = SRAKeySerializationHelper.deserializeSRAKeyPair(serializedSRAKeyPair);
+        this.discardPile.push(cardIndex);
 
         this.updateViewModel();
     }

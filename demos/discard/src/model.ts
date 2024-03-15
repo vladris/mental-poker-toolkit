@@ -30,12 +30,7 @@ export type DiscardRequestAction = {
     key: SerializedSRAKeyPair;
 }
 
-export type PassTurnAction = {
-    clientId: ClientId;
-    type: "PassTurn";
-}
-
-export type Action = DealAction | DrawRequestAction | DrawResponseAction | DiscardRequestAction | PassTurnAction;
+export type Action = DealAction | DrawRequestAction | DrawResponseAction | DiscardRequestAction;
 
 export type GameStatus = "Waiting" | "Shuffling" | "Dealing" | "MyTurn" | "OthersTurn" | "Win" | "Loss" | "Draw";
 
@@ -109,15 +104,17 @@ export async function drawCard() {
 
     await store.dispatch(updateGameStatus("Waiting"));
 
-    sm.run([
+    await sm.run([
         sm.local(async (queue: IQueue<Action>, context: RootStore) => {
-            queue.enqueue({ 
+            await queue.enqueue({ 
                 clientId: context.getState().id.value, 
                 type: "DrawRequest",
                 cardIndex: context.getState().deck.value!.getDrawIndex() });
         }),
         sm.transition((action: DrawRequestAction) => {
             // Our own draw request, no need to do anything
+            // This should be sequenced before the response, as other client needs to
+            // receive it before it responds
             if (action.type !== "DrawRequest") {
                 throw new Error("Invalid action type");
             }
@@ -132,7 +129,8 @@ export async function drawCard() {
         }),
     ], queue, store);
 
-    await store.dispatch(updateGameStatus("MyTurn"));
+    await store.dispatch(updateGameStatus("OthersTurn"));
+    await waitForOpponent();
 }
 
 // Discard a card - this is a single-step process - we provide the card index and the key used to
@@ -145,11 +143,11 @@ export async function discardCard(index: number) {
 
     await sm.run([
         sm.local(async (queue: IQueue<Action>, context: RootStore) => {
-            queue.enqueue({
+            await queue.enqueue({
                 clientId: context.getState().id.value, 
                 type: "DiscardRequest",
                 cardIndex: index,
-                key: context.getState().deck.value!.getKey(index)});
+                key: context.getState().deck.value!.getKeyFromHand(index)});
         }),
         sm.transition(async (action: DiscardRequestAction, context: RootStore) => {
             // Our own discard request, update the deck
@@ -161,59 +159,47 @@ export async function discardCard(index: number) {
         }),
     ], queue, store);
 
-    await store.dispatch(updateGameStatus("MyTurn"));
-}
-
-// Pass the turn
-export async function passTurn() {
     await store.dispatch(updateGameStatus("OthersTurn"));
-
-    await store.getState().queue.value!.enqueue({
-        clientId: store.getState().id.value,
-        type: "PassTurn",
-    });
+    await waitForOpponent();
 }
 
 // Wait for the opponent to take an action and respond based on that
 export async function waitForOpponent() {
     const queue = store.getState().queue.value!;
 
-    while (true) {
-        // Dequeue the other player's action to decide next steps
-        const othersAction = await queue.dequeue();
 
-        switch (othersAction.type) {
-            case "DrawRequest":
-                await sm.run([
-                    sm.local(async (queue: IQueue<Action>, context: RootStore) => {
-                        // Ensure other player is drawing from the top of the deck
-                        if (othersAction.cardIndex !== store.getState().deck.value!.getDrawIndex()) {
-                            throw new Error("Invalid card index for draw");
-                        }
+    // Dequeue the other player's action to decide next steps
+    const othersAction = await queue.dequeue();
 
-                        await queue.enqueue({
-                            clientId: store.getState().id.value,
-                            type: "DrawResponse",
-                            cardIndex: othersAction.cardIndex,
-                            key: store.getState().deck.value!.getKey(othersAction.cardIndex)
-                        })}),
-                    sm.transition(async (action: DrawResponseAction, context: RootStore) => {
-                        // Update the deck once our response was sequenced
-                        if (action.type !== "DrawResponse") {
-                            throw new Error("Invalid action type");
-                        }
+    switch (othersAction.type) {
+        case "DrawRequest":
+            await sm.run([
+                sm.local(async (queue: IQueue<Action>, context: RootStore) => {
+                    // Ensure other player is drawing from the top of the deck
+                    if (othersAction.cardIndex !== store.getState().deck.value!.getDrawIndex()) {
+                        throw new Error("Invalid card index for draw");
+                    }
 
-                        await context.getState().deck.value!.othersDraw();
-                    })], queue, store);
-                break;
-            case "DiscardRequest":
-                // No need to respond to a discard request, just update state
-                await store.getState().deck.value!.othersDiscard(othersAction.cardIndex, othersAction.key); 
-                break
-            case "PassTurn":
-                // The other player passed the turn
-                await store.dispatch(updateGameStatus("MyTurn"));
-                return;
-        }
+                    await queue.enqueue({
+                        clientId: store.getState().id.value,
+                        type: "DrawResponse",
+                        cardIndex: othersAction.cardIndex,
+                        key: store.getState().deck.value!.getKey(othersAction.cardIndex)
+                    })}),
+                sm.transition(async (action: DrawResponseAction, context: RootStore) => {
+                    // Update the deck once our response was sequenced
+                    if (action.type !== "DrawResponse") {
+                        throw new Error("Invalid action type");
+                    }
+
+                    await context.getState().deck.value!.othersDraw();
+                })], queue, store);
+            break;
+        case "DiscardRequest":
+            // No need to respond to a discard request, just update state
+            await store.getState().deck.value!.othersDiscard(othersAction.cardIndex, othersAction.key);
+            break;
     }
+    
+    await store.dispatch(updateGameStatus("MyTurn"));
 }

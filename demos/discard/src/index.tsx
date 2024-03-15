@@ -2,7 +2,7 @@ import ReactDOM from "react-dom/client";
 import { Provider } from "react-redux";
 import { getLedger } from "@mental-poker-toolkit/demo-transport";
 import { establishTurnOrder, randomClientId, shuffle, upgradeTransport } from "@mental-poker-toolkit/primitives";
-import { Action, deal } from "./model";
+import { Action, deal, waitForOpponent } from "./model";
 import { MainView } from "./mainView";
 import { store, updateDeck, updateGameStatus, updateId, updateOtherPlayer, updateQueue } from "./store";
 import { Deck, getDeck } from "./deck";
@@ -47,6 +47,10 @@ getLedger<Action>().then(async (ledger) => {
 
     // Update game status
     await store.dispatch(updateGameStatus(imFirst ? "MyTurn" : "OthersTurn"));
+
+    if (!imFirst) {
+        await waitForOpponent();
+    }
 });
 
 // Set up React
