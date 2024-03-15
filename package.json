@@ -15,7 +15,8 @@
     "demos/discard"
   ],
   "scripts": {
-    "build": "npm run build --ws"
+    "build": "npm run build --ws",
+    "test": "npm run test --ws --if-present"
   },
   "author": "Vlad Riscutia",
   "license": "MIT",

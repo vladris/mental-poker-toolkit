@@ -7,33 +7,26 @@ if (!("crypto" in globalThis)) {
 }
 
 describe("SRA tests", () => {
-    test("Roundtrip", async () => {
-        const kp = await SRA.generateKeyPair(BigIntUtils.randPrime());
-   
+    // Do key generation once since it's expensive
+    const sharedPrime = BigIntUtils.randPrime();
+    const kp1 = SRA.generateKeyPair(sharedPrime);
+    const kp2 = SRA.generateKeyPair(sharedPrime);
+
+    test("Roundtrip works", async () => {
         const plaintext = "Hello, world!";
-        const cypherText = await SRA.encryptString(plaintext, kp);
+        const cypherText = await SRA.encryptString(plaintext, kp1);
         
-        expect(await SRA.decryptString(cypherText, kp)).toBe(plaintext);
+        expect(await SRA.decryptString(cypherText, kp1)).toBe(plaintext);
     });
 
-    test("Double encryption", async () => {
-        const sharedPrime = BigIntUtils.randPrime();
-
-        const kp1 = await SRA.generateKeyPair(sharedPrime);
-        const kp2 = await SRA.generateKeyPair(sharedPrime);
-
+    test("Double encryption works", async () => {
         const plaintext = "Hello, world!";
         const cypherText = await SRA.encryptString(SRA.encryptString(plaintext, kp1), kp2);
 
         expect(await SRA.decryptString(await SRA.decryptString(cypherText, kp2), kp1)).toBe(plaintext);
     });
 
-    test("Commutativity", async () => {
-        const sharedPrime = BigIntUtils.randPrime();
-
-        const kp1 = await SRA.generateKeyPair(sharedPrime);
-        const kp2 = await SRA.generateKeyPair(sharedPrime);
-
+    test("Commutativity (decrypting in different order) works", async () => {
         const plaintext = "Hello, world!";
         const cypherText = await SRA.encryptString(SRA.encryptString(plaintext, kp1), kp2);
 
