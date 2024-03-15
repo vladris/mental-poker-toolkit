@@ -28,21 +28,40 @@ players compete for a payoff so we need to eliminate cheating through
 cryptography. We achieve all of this by communicated over a public channel
 where all players view all shared state.
 
-## Roadmap
+## Toolkit
 
-We implemented a zero-trust discard game over Fluid Framework over a couple of
-hackathons. We will be refactoring/cleaning up the code and open sourcing it as
-packages in this repo, including:
+The toolkit provides a set of packages you can use to build this type of game.
+It has everything needed "out-of-the-box", but you can swap things as needed
+with other implementation.
 
-- [x] Cryptography: SRA commutative symmetric encryption algorithm and digital
-  signing.
-- [x] An [append-only distributed data structure](https://github.com/vladris/fluid-ledger)
-  for Fluid Framework.
-- [x] An abstraction for client communication for games and a Fluid
-  implementation for it.
-- [x] A decorator providing message signing and authentication for client
-  communication.
-- [x] An async queue abstraction over the transport layer.
-- [x] A state machine for modeling games.
-- [ ] Primitives for common game actions like handling a deck of cards.
-- [ ] Documentation and recipes for various games.
+The toolkit contains the following packages:
+
+* `types` - Type package containing common type definitions. This ensures other
+  toolkit packages don't depend on each other.
+* `fluid-client` - A client that provides transport over Fluid Framework.
+* `signed-transport` - A decorator for transport that adds signing and
+  signature verification to messages.
+* `action-queue` - An async queue that sits on top of a transport and provides
+  an easy to use async interface.
+* `state-machine` - A state machine for running games as sequences of steps.
+* `primitives` - This is a utility package that builds on top of the other ones
+  to provide some common functionality like client key exchange, upgrading
+  a transport to a signed transport, shuffling a deck of cards etc.
+
+## Demos
+
+This repo also contains demo applications:
+
+* `transport` - This is a simple demo setting up a Fluid container connecting
+  with a local relay service and returning a transport.
+* `rock-paper-scissors` - This demonstrates a cryptographically secure game of
+  rock-paper-scissors, where both clients post their encrypted selection, then
+  share their encryption keys to determine the winner.
+* `discard` - This demo implements a simple discard game where players take
+  turns discarding and drawing until either a player has not cards left or
+  a player can't move (neither discard nor draw).
+
+## Documentation
+
+See the detailed documentation [here](https://vladris.com/mental-poker-toolkit/).
+Also checkout the `README` files of each package and [these articles](https://vladris.com/writings/#mental-poker).
