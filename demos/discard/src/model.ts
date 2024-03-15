@@ -196,7 +196,6 @@ export async function cantMove() {
 export async function waitForOpponent() {
     const queue = store.getState().queue.value!;
 
-
     // Dequeue the other player's action to decide next steps
     const othersAction = await queue.dequeue();
 
@@ -236,15 +235,19 @@ export async function waitForOpponent() {
             // If other player discarded all cards, they win
             if (store.getState().deckViewModel.value.othersHand === 0) {
                 await store.dispatch(updateGameStatus("Loss"));
-            // Otherwise it's our turn
-            } else {
+            // Otherwise it's our turn if we can move
+            } else if (store.getState().deck.value?.canIMove()) {
                 await store.dispatch(updateGameStatus("MyTurn"));
+            // If we can't move, we lose
+            } else {
+                await cantMove();
             }
+
 
             break;
         case "CantMove":
             // Other player can't move, we win
             await store.dispatch(updateGameStatus("Win"));
-            return;
-    }
+            break;
+        }
 }

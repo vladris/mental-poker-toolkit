@@ -27,13 +27,6 @@ export const MainView = () => {
             deckViewModel.value.discardPile[deckViewModel.value.discardPile.length - 1]);
     }
 
-    // We lose if we can't discard any card and can't draw
-    if (myTurn && 
-        !deckViewModel.value.myCards.some((card) => canDiscard(deckViewModel.value.myCards.indexOf(card))) &&
-        deckViewModel.value.drawPile === 0) {
-        cantMove();
-    }
-
     return <div>
         <div>
             <p>Id: {idSelector.value}</p>

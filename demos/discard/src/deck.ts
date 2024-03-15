@@ -12,6 +12,11 @@ export function getDeck() {
         }
     }
 
+    
+    const deck2 = ["2", "3", "4", "5", "6", "7", "9", "10", "J", "Q", "K", "A"].map((v) => v + ":hearts");
+    deck2.push("A:spades")
+    return deck2;
+
     return deck;
 }
 
@@ -100,6 +105,18 @@ export class Deck {
         this.discardPile.push(cardIndex);
 
         this.updateViewModel();
+    }
+
+    // Check if I can draw and/or discard
+    canIMove() {
+        // If there's nothing on the discard pile I can play anything
+        if (this.discardPile.length === 0) {
+            return true;
+        }
+
+        // We must have at least a card on the draw pile or a card we can discard
+        return this.drawPile.length > 0 || this.myCards.some((index) =>
+            matchSuitOrValue(this.cardAt(index), this.cardAt(this.discardPile[this.discardPile.length - 1])));
     }
 
     private async updateViewModel() {
