@@ -1,5 +1,9 @@
 import { SRAKeyPair } from "@mental-poker-toolkit/types";
-import { SRA, SerializedSRAKeyPair, SRAKeySerializationHelper } from "@mental-poker-toolkit/cryptography";
+import {
+    SRA,
+    SerializedSRAKeyPair,
+    SRAKeySerializationHelper,
+} from "@mental-poker-toolkit/cryptography";
 import { RootStore, updateDeckViewModel } from "./store";
 
 // Get a new deck of cards
@@ -11,11 +15,6 @@ export function getDeck() {
             deck.push(value + ":" + suit);
         }
     }
-
-    
-    const deck2 = ["2", "3", "4", "5", "6", "7", "9", "10", "J", "Q", "K", "A"].map((v) => v + ":hearts");
-    deck2.push("A:spades")
-    return deck2;
 
     return deck;
 }
@@ -42,28 +41,38 @@ export class Deck {
         private encryptedCards: string[],
         private myKeys: SRAKeyPair[],
         private store: RootStore
-        ) {
+    ) {
         this.drawPile = encryptedCards.map((_, i) => i);
     }
 
     // Get key at index
     getKey(index: number) {
-        return SRAKeySerializationHelper.serializeSRAKeyPair(this.myKeys[index]);
+        return SRAKeySerializationHelper.serializeSRAKeyPair(
+            this.myKeys[index]
+        );
     }
 
     // Get key from hand
     getKeyFromHand(index: number) {
-        return SRAKeySerializationHelper.serializeSRAKeyPair(this.myKeys[this.myCards[index]]);
+        return SRAKeySerializationHelper.serializeSRAKeyPair(
+            this.myKeys[this.myCards[index]]
+        );
     }
 
     // Get decrypted card at index
     cardAt(index: number) {
         if (!this.decryptedCards[index]) {
             // Decrypt with my key
-            const partial = SRA.decryptString(this.encryptedCards[index], this.myKeys[index]);
+            const partial = SRA.decryptString(
+                this.encryptedCards[index],
+                this.myKeys[index]
+            );
 
             // Decrypt with other player key and store
-            this.decryptedCards[index] = SRA.decryptString(partial, this.othersKeys[index]);
+            this.decryptedCards[index] = SRA.decryptString(
+                partial,
+                this.othersKeys[index]
+            );
         }
 
         return this.decryptedCards[index]!;
@@ -78,7 +87,10 @@ export class Deck {
     async myDraw(serializedSRAKeyPair: SerializedSRAKeyPair) {
         const index = this.drawPile.shift()!;
         this.myCards.push(index);
-        this.othersKeys[index] = SRAKeySerializationHelper.deserializeSRAKeyPair(serializedSRAKeyPair);
+        this.othersKeys[index] =
+            SRAKeySerializationHelper.deserializeSRAKeyPair(
+                serializedSRAKeyPair
+            );
 
         await this.updateViewModel();
     }
@@ -86,7 +98,7 @@ export class Deck {
     // Other player puts a card in their hand
     async othersDraw() {
         this.othersCards.push(this.drawPile.shift()!);
-        
+
         await this.updateViewModel();
     }
 
@@ -99,9 +111,15 @@ export class Deck {
     }
 
     // The other player discards a card
-    async othersDiscard(index: number, serializedSRAKeyPair: SerializedSRAKeyPair) {
+    async othersDiscard(
+        index: number,
+        serializedSRAKeyPair: SerializedSRAKeyPair
+    ) {
         const cardIndex = this.othersCards.splice(index, 1)[0];
-        this.othersKeys[cardIndex] = SRAKeySerializationHelper.deserializeSRAKeyPair(serializedSRAKeyPair);
+        this.othersKeys[cardIndex] =
+            SRAKeySerializationHelper.deserializeSRAKeyPair(
+                serializedSRAKeyPair
+            );
         this.discardPile.push(cardIndex);
 
         this.updateViewModel();
@@ -115,17 +133,26 @@ export class Deck {
         }
 
         // We must have at least a card on the draw pile or a card we can discard
-        return this.drawPile.length > 0 || this.myCards.some((index) =>
-            matchSuitOrValue(this.cardAt(index), this.cardAt(this.discardPile[this.discardPile.length - 1])));
+        return (
+            this.drawPile.length > 0 ||
+            this.myCards.some((index) =>
+                matchSuitOrValue(
+                    this.cardAt(index),
+                    this.cardAt(this.discardPile[this.discardPile.length - 1])
+                )
+            )
+        );
     }
 
     private async updateViewModel() {
-        await this.store.dispatch(updateDeckViewModel({ 
-            drawPile: this.drawPile.length,
-            discardPile: this.discardPile.map((i) => this.cardAt(i)),
-            myCards: this.myCards.map((i) => this.cardAt(i)),
-            othersHand: this.othersCards.length,
-        }));
+        await this.store.dispatch(
+            updateDeckViewModel({
+                drawPile: this.drawPile.length,
+                discardPile: this.discardPile.map((i) => this.cardAt(i)),
+                myCards: this.myCards.map((i) => this.cardAt(i)),
+                othersHand: this.othersCards.length,
+            })
+        );
     }
 }
 

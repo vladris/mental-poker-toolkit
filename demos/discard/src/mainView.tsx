@@ -2,7 +2,7 @@ import { useSelector as useReduxSelector, TypedUseSelectorHook } from "react-red
 import { RootState  } from "./store";
 import { HandView } from "./handView";
 import { CardView } from "./cardView";
-import { cantMove, discardCard, drawCard } from "./model";
+import { discardCard, drawCard } from "./model";
 import { matchSuitOrValue } from "./deck";
 
 export const useSelector: TypedUseSelectorHook<RootState> = useReduxSelector;
