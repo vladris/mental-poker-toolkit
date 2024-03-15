@@ -1,7 +1,7 @@
 // Digital signing using crypto.subtle
 import { encode, decode } from "base64-arraybuffer";
-import { Key, PublicPrivateKeyPair } from "@mental-poker-toolkit/types";
-
+import { ISignatureProvider, Key, PublicPrivateKeyPair } from "@mental-poker-toolkit/types";
+    
 export namespace Signing {
     // Generate public/private key pair
     export async function generatePublicPrivateKeyPair(): Promise<PublicPrivateKeyPair> {
@@ -24,9 +24,12 @@ export namespace Signing {
             ),
         };
     }
+}
 
+
+export class SignatureProvider implements ISignatureProvider {
     // Returns payload signature
-    export async function sign(
+    async sign(
         payload: string,
         privateKey: Key
     ): Promise<string> {
@@ -50,7 +53,7 @@ export namespace Signing {
     }
 
     // Verify payload signature
-    export async function verifySignature(
+    async verifySignature(
         payload: string,
         signature: string,
         publicKey: Key

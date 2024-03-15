@@ -226,6 +226,10 @@ export async function waitForOpponent() {
             await store.dispatch(updateGameStatus("MyTurn"));
             break;
         case "DiscardRequest":
+            // Here is where we would check if the other player is cheating - if the
+            // card they are playing doesn't match the top of the discard pile by suit or
+            // color, it's an illegal move
+
             // No need to respond to a discard request, just update state
             await store.getState().deck.value!.othersDiscard(othersAction.cardIndex, othersAction.key);
 

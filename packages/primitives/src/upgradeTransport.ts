@@ -7,6 +7,7 @@ import {
     ITransport,
 } from "@mental-poker-toolkit/types";
 import { ActionQueue } from "@mental-poker-toolkit/action-queue";
+import { SignatureProvider } from "@mental-poker-toolkit/cryptography";
 
 // Upgrade an unsigned transport to a queue over signed transport.
 export async function upgradeTransport<T extends BaseAction>(
@@ -29,7 +30,8 @@ export async function upgradeTransport<T extends BaseAction>(
         new SignedTransport(
             transport,
             { clientId, privateKey: keyPair.privateKey },
-            keyStore
+            keyStore,
+            new SignatureProvider()
         )
     );
 }

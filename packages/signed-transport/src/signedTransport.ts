@@ -5,8 +5,8 @@ import {
     ITransport,
     KeyStore,
     Signed,
+    ISignatureProvider
 } from "@mental-poker-toolkit/types";
-import { Signing } from "@mental-poker-toolkit/cryptography";
 
 export class SignedTransport<T extends BaseAction>
     extends EventEmitter
@@ -15,7 +15,8 @@ export class SignedTransport<T extends BaseAction>
     constructor(
         private readonly transport: ITransport<Signed<T>>,
         private readonly clientKey: ClientKey,
-        private readonly keyStore: KeyStore
+        private readonly keyStore: KeyStore,
+        private readonly signatureProvider: ISignatureProvider
     ) {
         super();
         transport.on("actionPosted", async (value) => {
@@ -34,7 +35,7 @@ export class SignedTransport<T extends BaseAction>
     }
 
     private async signAction(value: T): Promise<Signed<T>> {
-        const signature = await Signing.sign(
+        const signature = await this.signatureProvider.sign(
             JSON.stringify(value),
             this.clientKey.privateKey
         );
@@ -62,7 +63,7 @@ export class SignedTransport<T extends BaseAction>
         }
 
         if (
-            !(await Signing.verifySignature(
+            !(await this.signatureProvider.verifySignature(
                 JSON.stringify(value),
                 signature,
                 publicKey

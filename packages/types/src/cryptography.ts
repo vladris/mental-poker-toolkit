@@ -25,3 +25,12 @@ export type SRAKeyPair = {
     enc: bigint;
     dec: bigint;
 };
+
+// Signature provider interface
+export interface ISignatureProvider {
+    // Sign a payload
+    sign(payload: string, privateKey: Key): Promise<string>;
+
+    // Verify a signature
+    verifySignature(payload: string, signature: string, publicKey: Key): Promise<boolean>;
+}
