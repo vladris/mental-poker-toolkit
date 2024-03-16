@@ -32,3 +32,6 @@ is the main view of the game.
 
 `index.tsx` kicks things off by establishing Fluid connection then setting up
 the game, while also mounting the root React component.
+
+To keep the code simple and easy to read, we are not handling cases like
+connection drops etc.

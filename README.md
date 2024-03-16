@@ -64,4 +64,4 @@ This repo also contains demo applications:
 ## Documentation
 
 See the detailed documentation [here](https://vladris.com/mental-poker-toolkit/).
-Also checkout the `README` files of each package and [these articles](https://vladris.com/writings/#mental-poker).
+Also checkout the `README` files of each demo and [these articles](https://vladris.com/writings/#mental-poker). The code has plenty of comments explaining what is going on.

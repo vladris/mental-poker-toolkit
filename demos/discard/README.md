@@ -51,3 +51,13 @@ our own hand.
 
 `index.tsx` kicks things off by establishing Fluid connection then setting up
 the game, while also mounting the root React component.
+
+To keep the code simple and easy to read, we are not handling cases like
+connection drops etc.
+
+We are also not validating the other player's move, though this would be easy
+to add and, in fact, for a real-world implementation, would be mandatory. There
+is a comment in the code where validation should go in. A malicious user could
+discard any card and since we're not validating whether their move was legal,
+they could "trick" us. The reason this is not implemented is to keep the
+example simple (thought PRs are welcomed if you want to give it a stab).
