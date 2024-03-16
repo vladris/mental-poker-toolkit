@@ -23,6 +23,8 @@ players compete for a payoff so we need to eliminate cheating through
 cryptography. We achieve all of this by communicated over a public channel
 where all players view all shared state.
 
+See [Zero trust](./zero-trust.md) for limitations.
+
 ## More resources
 
 See [these articles](https://vladris.com/writings/#mental-poker) for more
