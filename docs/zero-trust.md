@@ -1,4 +1,4 @@
-# Zero trust
+# Zero trust and limitations
 
 If we can rely on a trusted 3rd party, modeling secure games is easy. Assuming
 we can't, we use Mental Poker. But it's important to discuss the limitations
