@@ -62,9 +62,6 @@ state machine is:
 > requires a `clientId`, we can easily tell our own incoming actions from
 > actions coming from other players.
 
-See [State Machine](./state-machine.md) for details on the state machine
-implementation.
-
 ## More complex examples
 
 ### Shuffling cards
