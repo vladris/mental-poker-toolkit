@@ -3,7 +3,7 @@
 * [What is Mental Poker?](./what-is-mental-poker.md)
 * [Toolkit Architecture](./architecture.md)
 * [Modeling Games](./modeling-games.md)
-* [Zero trust and limitation](./zero-trust.md)
+* [Zero trust and limitations](./zero-trust.md)
 
 ## Articles (external links)
 
