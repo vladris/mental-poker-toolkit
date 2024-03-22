@@ -10,7 +10,11 @@ import {
 import { Signing } from "@mental-poker-toolkit/cryptography";
 
 // Action for exchanging public keys
-type KeyExchangeAction = BaseAction & { publicKey: Key };
+type KeyExchangeAction = {
+    clientId: ClientId;
+    type: "KeyExchange";
+    publicKey: Key;
+};
 
 // Context for the key exchange protocol
 type CryptoContext = {
@@ -20,9 +24,7 @@ type CryptoContext = {
 };
 
 // Create a new crypto context
-async function makeCryptoContext(
-    clientId: ClientId
-): Promise<CryptoContext> {
+async function makeCryptoContext(clientId: ClientId): Promise<CryptoContext> {
     return {
         clientId,
         me: await Signing.generatePublicPrivateKeyPair(),
@@ -33,32 +35,44 @@ async function makeCryptoContext(
 // Create sequence for key exchange
 function makeKeyExchangeSequence(players: number) {
     return sm.sequence([
-        sm.local(async (actionQueue: IQueue<KeyExchangeAction>, context: CryptoContext) => {
-            // Post public key
-            await actionQueue.enqueue({
-                type: "KeyExchange",
-                clientId: context.clientId,
-                publicKey: context.me.publicKey,
-            });
-        }),
-        sm.repeat(sm.transition((action: KeyExchangeAction, context: CryptoContext) => {
-            // This should be a KeyExchangeAction
-            if (action.type !== "KeyExchange") {
-                throw new Error("Invalid action type");
+        sm.local(
+            async (
+                actionQueue: IQueue<KeyExchangeAction>,
+                context: CryptoContext
+            ) => {
+                // Post public key
+                await actionQueue.enqueue({
+                    type: "KeyExchange",
+                    clientId: context.clientId,
+                    publicKey: context.me.publicKey,
+                });
             }
+        ),
+        sm.repeat(
+            sm.transition(
+                (action: KeyExchangeAction, context: CryptoContext) => {
+                    // This should be a KeyExchangeAction
+                    if (action.type !== "KeyExchange") {
+                        throw new Error("Invalid action type");
+                    }
 
-            // Protocol expects clients to post an ID
-            if (action.clientId === undefined) {
-                throw new Error("Expected client ID");
-            }
+                    // Protocol expects clients to post an ID
+                    if (action.clientId === undefined) {
+                        throw new Error("Expected client ID");
+                    }
 
-            // Protocol expects each client to only post once and to have a unique ID
-            if (context.keyStore.has(action.clientId)) {
-                throw new Error("Same client posted key multiple times");
-            }
+                    // Protocol expects each client to only post once and to have a unique ID
+                    if (context.keyStore.has(action.clientId)) {
+                        throw new Error(
+                            "Same client posted key multiple times"
+                        );
+                    }
 
-            context.keyStore.set(action.clientId, action.publicKey);
-        }), players)
+                    context.keyStore.set(action.clientId, action.publicKey);
+                }
+            ),
+            players
+        ),
     ]);
 }
 
@@ -70,7 +84,7 @@ export async function keyExchange(
 ) {
     const context = await makeCryptoContext(clientId);
 
-    const keyExchangeSequence = makeKeyExchangeSequence(players); 
+    const keyExchangeSequence = makeKeyExchangeSequence(players);
 
     // Run state machine
     await sm.run(keyExchangeSequence, actionQueue, context);
